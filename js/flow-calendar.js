@@ -261,7 +261,7 @@ function fcShowDetail(id) {
     }
 
     document.getElementById('fcDetailBody').innerHTML = html;
-    document.getElementById('fcDetailPanel').classList.remove('hidden');
+    document.getElementById('flowCalDetailPanel').classList.remove('hidden');
     document.getElementById('fcEmptyDetail').classList.add('hidden');
 
     // Highlight
@@ -271,7 +271,7 @@ function fcShowDetail(id) {
 }
 
 function fcCloseDetail() {
-    document.getElementById('fcDetailPanel').classList.add('hidden');
+    document.getElementById('flowCalDetailPanel').classList.add('hidden');
     document.getElementById('fcEmptyDetail').classList.remove('hidden');
     fcSelectedId = null;
     document.querySelectorAll('.fc-event-item').forEach(el => el.classList.remove('fc-selected'));
