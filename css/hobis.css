@@ -137,6 +137,13 @@ input:focus, select:focus { border-color: var(--hobis-cyan); }
 
 .hidden { display: none !important; }
 
+/* ======== CUSTOM SCROLLBAR (HOBIS THEME) ======== */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--hobis-border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--hobis-cyan); }
+* { scrollbar-width: thin; scrollbar-color: var(--hobis-border) transparent; }
+
 /* ======== FLOW CALENDAR MODULE ======== */
 
 /* Filter rows */
@@ -217,7 +224,7 @@ input:focus, select:focus { border-color: var(--hobis-cyan); }
 .fc-modal-title { font-family: 'Orbitron', sans-serif; font-size: 1.0rem; color: white; flex: 1; margin-right: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fc-modal-close { background: none; border: 1px solid var(--hobis-alert); color: var(--hobis-alert); padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; transition: 0.2s; flex-shrink: 0; }
 .fc-modal-close:hover { background: rgba(255,51,0,0.15); }
-.fc-modal-body { overflow-y: auto; max-height: calc(85vh - 60px); }
+.fc-modal-body { }
 @keyframes fcFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 /* Detail inline (mobile) â matches .panel design */
