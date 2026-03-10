@@ -321,18 +321,30 @@ function fcBuildDetailHtml(ev) {
         html += '<div class="fc-detail-section"><div class="fc-ds-title">FILES</div><div class="fc-ds-body">' + ev.file_names.map(f => '<span style="color:var(--hobis-warn);">FILE:</span> ' + fcEsc(f)).join('<br>') + '</div></div>';
     }
 
+    // Migrate legacy comments without id
+    let needsSave = false;
+    (ev.comments||[]).forEach(c => {
+        if (!c.id) { c.id = generateId('cm_'); needsSave = true; }
+    });
+    if (needsSave) storeSave();
+
+    html += '<div class="fc-detail-section"><div class="fc-ds-title">MESSAGES (' + (ev.comments||[]).length + ')</div>';
     if ((ev.comments||[]).length) {
-        html += '<div class="fc-detail-section"><div class="fc-ds-title">MESSAGES (' + ev.comments.length + ')</div>';
         ev.comments.forEach(c => {
             html += '<div class="fc-comment">' +
+                '<div class="fc-comment-actions">' +
+                    '<button class="btn-outline fc-ca-btn" onclick="event.stopPropagation();fcShowCommentForm(\'' + ev.id + '\',\'' + c.id + '\')">EDIT</button>' +
+                    '<button class="btn-outline fc-ca-btn fc-ca-del" onclick="event.stopPropagation();fcDeleteComment(\'' + ev.id + '\',\'' + c.id + '\')">DEL</button>' +
+                '</div>' +
                 '<span class="fc-comment-author">' + fcEsc(c.author||'') + '</span>' +
                 (c.author_position ? '<span class="fc-comment-pos">' + fcEsc(c.author_position) + '</span>' : '') +
                 '<span class="fc-comment-date">' + fcEsc(c.date||'') + '</span>' +
                 '<div class="fc-comment-body">' + fcEsc(c.content||'') + '</div>' +
             '</div>';
         });
-        html += '</div>';
     }
+    html += '<div class="fc-add-comment-btn" onclick="fcShowCommentForm(\'' + ev.id + '\')">+ ADD COMMENT</div>';
+    html += '</div>';
     return html;
 }
 
@@ -517,6 +529,68 @@ function fcShowDayEvents(day) {
     fcSetSubTab('search');
     document.getElementById('fcResultCount').textContent = fcCalYear + '.' + String(fcCalMonth+1).padStart(2,'0') + '.' + String(day).padStart(2,'0') + ': ' + dayEvents.length + ' EVENTS';
     fcRenderEventList(dayEvents);
+}
+
+// --- Comment CRUD ---
+function fcShowCommentForm(eventId, commentId) {
+    fcCancelCommentForm();
+    const ev = storeFindEvent(eventId);
+    if (!ev) return;
+    let existing = null;
+    if (commentId) {
+        existing = (ev.comments||[]).find(c => c.id === commentId);
+    }
+
+    const formHtml = '<div class="fc-comment-form" id="fcCommentForm">' +
+        '<div class="ef-row">' +
+            '<div class="ef-field" style="flex:1;"><label>작성자 *</label>' +
+                '<input type="text" id="fcCfAuthor" value="' + fcEsc(existing ? existing.author : '') + '" placeholder="이름...">' +
+            '</div>' +
+            '<div class="ef-field" style="flex:1;"><label>직책</label>' +
+                '<input type="text" id="fcCfPos" value="' + fcEsc(existing ? existing.author_position || '' : '') + '" placeholder="직책...">' +
+            '</div>' +
+        '</div>' +
+        '<div class="ef-field"><label>내용 *</label>' +
+            '<textarea id="fcCfContent" rows="3" placeholder="댓글 내용...">' + fcEsc(existing ? existing.content : '') + '</textarea>' +
+        '</div>' +
+        '<div class="fc-cf-btns">' +
+            '<button class="btn-outline" style="color:var(--hobis-green);border-color:var(--hobis-green);" onclick="fcSaveComment(\'' + eventId + '\'' + (commentId ? ',\'' + commentId + '\'' : '') + ')">SAVE</button>' +
+            '<button class="btn-outline" onclick="fcCancelCommentForm()">CANCEL</button>' +
+        '</div>' +
+    '</div>';
+
+    const addBtn = document.querySelector('.fc-add-comment-btn');
+    if (addBtn) {
+        addBtn.insertAdjacentHTML('beforebegin', formHtml);
+        document.getElementById('fcCfAuthor').focus();
+    }
+}
+
+function fcSaveComment(eventId, commentId) {
+    const author = document.getElementById('fcCfAuthor').value.trim();
+    const content = document.getElementById('fcCfContent').value.trim();
+    if (!author || !content) { alert('작성자와 내용을 입력하세요.'); return; }
+
+    const pos = document.getElementById('fcCfPos').value.trim();
+    if (commentId) {
+        storeUpdateComment(eventId, commentId, { author, author_position: pos, content });
+    } else {
+        storeAddComment(eventId, { author, author_position: pos, content });
+    }
+    evRefresh();
+    fcShowDetail(eventId);
+}
+
+function fcDeleteComment(eventId, commentId) {
+    if (!confirm('이 댓글을 삭제하시겠습니까?')) return;
+    storeDeleteComment(eventId, commentId);
+    evRefresh();
+    fcShowDetail(eventId);
+}
+
+function fcCancelCommentForm() {
+    const form = document.getElementById('fcCommentForm');
+    if (form) form.remove();
 }
 
 // Utility

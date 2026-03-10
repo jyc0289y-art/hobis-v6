@@ -190,6 +190,20 @@ input:focus, select:focus { border-color: var(--hobis-cyan); }
 .fc-comment-date { font-size: 0.7rem; color: #5f7481; margin-left: 8px; }
 .fc-comment-body { font-size: 0.8rem; color: #a0c0c0; margin-top: 4px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
 
+/* Comment CRUD */
+.fc-comment { position: relative; }
+.fc-comment-actions { position: absolute; top: 6px; right: 6px; display: none; gap: 4px; }
+.fc-comment:hover .fc-comment-actions { display: flex; }
+.fc-ca-btn { font-size: 0.65rem !important; padding: 1px 6px !important; }
+.fc-ca-del { color: var(--hobis-alert) !important; border-color: var(--hobis-alert) !important; }
+.fc-comment-form { padding: 10px; border-left: 3px solid var(--hobis-green); margin-bottom: 8px; background: rgba(0,255,51,0.05); border-radius: 0 3px 3px 0; }
+.fc-comment-form input, .fc-comment-form textarea { width: 100%; padding: 6px 8px; background: var(--input-bg, #0d1117); border: 1px solid var(--hobis-border); color: #e0e0e0; border-radius: 3px; font-family: 'Share Tech Mono', monospace; font-size: 0.8rem; box-sizing: border-box; }
+.fc-comment-form textarea { resize: vertical; }
+.fc-comment-form label { font-size: 0.7rem; color: #5f7481; display: block; margin-bottom: 2px; }
+.fc-cf-btns { display: flex; gap: 8px; margin-top: 8px; }
+.fc-add-comment-btn { padding: 6px 12px; border: 1px dashed var(--hobis-border); border-radius: 3px; color: var(--hobis-cyan); font-size: 0.75rem; cursor: pointer; text-align: center; margin-top: 6px; transition: all 0.2s; }
+.fc-add-comment-btn:hover { border-color: var(--hobis-cyan); background: rgba(0,247,255,0.05); }
+
 /* Calendar grid */
 #fcCalendarView { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .fc-cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); min-width: 630px; border: 1px solid var(--hobis-border); border-radius: 4px; overflow: hidden; background: var(--hobis-panel); }

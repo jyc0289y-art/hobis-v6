@@ -197,6 +197,38 @@ function storeGetImportMeta() {
     return data.meta.lastImport || null;
 }
 
+// --- Comments ---
+function storeAddComment(eventId, comment) {
+    const ev = storeFindEvent(eventId);
+    if (!ev) return null;
+    if (!ev.comments) ev.comments = [];
+    comment.id = generateId('cm_');
+    comment.date = comment.date || new Date().toISOString();
+    ev.comments.push(comment);
+    storeSave();
+    return comment;
+}
+
+function storeUpdateComment(eventId, commentId, changes) {
+    const ev = storeFindEvent(eventId);
+    if (!ev || !ev.comments) return null;
+    const c = ev.comments.find(c => c.id === commentId);
+    if (!c) return null;
+    Object.assign(c, changes);
+    storeSave();
+    return c;
+}
+
+function storeDeleteComment(eventId, commentId) {
+    const ev = storeFindEvent(eventId);
+    if (!ev || !ev.comments) return false;
+    const idx = ev.comments.findIndex(c => c.id === commentId);
+    if (idx === -1) return false;
+    ev.comments.splice(idx, 1);
+    storeSave();
+    return true;
+}
+
 // --- Export ---
 function storeExportAll() {
     return JSON.stringify(storeGetData(), null, 2);
