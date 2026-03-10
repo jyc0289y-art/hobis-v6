@@ -37,6 +37,18 @@ function evInitApp() {
     const workspace = document.getElementById('fcWorkspace');
     if (workspace) workspace.style.display = 'flex';
 
+    // Restore last import status
+    const importMeta = storeGetImportMeta();
+    if (importMeta) {
+        const statusEl = document.getElementById('fcFileStatus');
+        if (statusEl) {
+            const dt = new Date(importMeta.date);
+            const timeStr = dt.getFullYear() + '.' + String(dt.getMonth()+1).padStart(2,'0') + '.' + String(dt.getDate()).padStart(2,'0') + ' ' + String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+            statusEl.textContent = 'LAST IMPORT: ' + (importMeta.filename || 'unknown') + ' (' + importMeta.count + ' events, ' + timeStr + ')';
+            statusEl.style.color = '#8fa3b0';
+        }
+    }
+
     // Update stats
     evUpdateStats();
 
@@ -92,15 +104,17 @@ function fcHandleFile(event) {
             const parsed = JSON.parse(e.target.result);
             if (Array.isArray(parsed)) {
                 const result = storeImportFlowJson(parsed);
-                document.getElementById('fcFileStatus').textContent = 'IMPORTED: ' + result.imported + ' EVENTS';
+                storeSetImportMeta(file.name);
+                document.getElementById('fcFileStatus').textContent = 'IMPORTED: ' + result.imported + ' EVENTS (' + file.name + ')';
                 document.getElementById('fcFileStatus').style.color = 'var(--hobis-green)';
                 evRefresh();
             } else if (parsed.meta && parsed.meta.version) {
                 if (confirm('v6 데이터 파일입니다. 현재 데이터를 교체하시겠습니까?\n(' + (parsed.events ? parsed.events.length : 0) + '개 일정, ' + (parsed.projects ? parsed.projects.length : 0) + '개 프로젝트)')) {
                     localStorage.setItem(STORE_KEY, JSON.stringify(parsed));
                     storeLoad();
+                    storeSetImportMeta(file.name);
                     evRefresh();
-                    document.getElementById('fcFileStatus').textContent = 'LOADED: ' + parsed.events.length + ' EVENTS';
+                    document.getElementById('fcFileStatus').textContent = 'LOADED: ' + parsed.events.length + ' EVENTS (' + file.name + ')';
                     document.getElementById('fcFileStatus').style.color = 'var(--hobis-green)';
                 }
             } else {

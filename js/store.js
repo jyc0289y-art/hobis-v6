@@ -174,8 +174,27 @@ function storeImportFlowJson(flowArray) {
         data.events.push(ev);
         imported++;
     });
+    // Save import metadata for persistence across refresh
+    data.meta.lastImport = {
+        filename: null, // will be set by caller (fcHandleFile)
+        date: new Date().toISOString(),
+        count: imported
+    };
     storeSave();
     return { imported };
+}
+
+function storeSetImportMeta(filename) {
+    const data = storeGetData();
+    if (data.meta.lastImport) {
+        data.meta.lastImport.filename = filename;
+        storeSave();
+    }
+}
+
+function storeGetImportMeta() {
+    const data = storeGetData();
+    return data.meta.lastImport || null;
 }
 
 // --- Export ---
