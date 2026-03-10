@@ -1,7 +1,7 @@
 // --- HOBIS CORE MODULE ---
 // Global state, initialization, tab management, fullscreen
 
-let currentMainTab = 'decay', currentSubMode = 'decay_forward';
+let currentMainTab = 'calendar', currentSubMode = 'decay_forward';
 let currentData = [], myChart = null, nucOptionsHTML = "", logHistory = [];
 let customerDB = [], customerHeaders = [], sourceInventory = [], selectedCustomer = null;
 let map = null, marker = null;
@@ -18,8 +18,12 @@ function toggleFullScreen() {
 }
 
 window.onload = function() {
+    // V6: Initialize store and calendar
+    storeLoad();
+    evInitApp();
+
     if (typeof GLOBAL_DB === 'undefined') {
-        alert("DB Error");
+        console.warn("DB not loaded - calculation modules unavailable");
     } else {
         loadDB();
         renderInputs();
@@ -33,6 +37,9 @@ window.onload = function() {
             }
         }, 500);
     }
+
+    // Set calendar as initial active tab
+    setMainTab('calendar');
 };
 
 function loadDB() {
@@ -45,10 +52,14 @@ function loadDB() {
     });
 }
 
-function setMainTab(t) {
+function setMainTab(t, btn) {
+    // Normalize: 'calendar' and 'flowcal' are the same tab
+    if (t === 'calendar') t = 'flowcal';
     currentMainTab = t;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
+    // Use explicit btn param, or fallback to event.target for inline onclick calls
+    const activeBtn = btn || (typeof event !== 'undefined' && event && event.target);
+    if (activeBtn && activeBtn.classList) activeBtn.classList.add('active');
 
     // Hide all mode-specific panels first
     document.getElementById('calcPanel').classList.add('hidden');
@@ -60,12 +71,11 @@ function setMainTab(t) {
     document.getElementById('fcEmptyDetail').classList.add('hidden');
     document.getElementById('logPanel').classList.add('hidden');
 
-    // FC mode: full-width layout for flow calendar
+    // FC mode: full-width layout for calendar
     const ws = document.querySelector('.workspace');
     if (t === 'flowcal') {
         ws.classList.add('fc-mode');
         document.getElementById('flowCalPanel').classList.remove('hidden');
-        // Detail is now handled via overlay/inline, no right panel needed
     } else {
         ws.classList.remove('fc-mode');
     }

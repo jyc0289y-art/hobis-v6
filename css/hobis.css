@@ -1,4 +1,4 @@
-/* HOBIS UI SYSTEM V4.15 PATCH 3 (REPORT & GRAPH FIX) */
+/* HOBIS UI SYSTEM V6.0 */
 :root {
     --hobis-green: #00ff33;
     --hobis-cyan: #00f7ff;
@@ -233,3 +233,43 @@ input:focus, select:focus { border-color: var(--hobis-cyan); }
 .fc-inline-detail::after { content:""; position:absolute; bottom:-1px; right:-1px; width:10px; height:10px; border-bottom:2px solid var(--hobis-cyan); border-right:2px solid var(--hobis-cyan); }
 .fc-inline-detail .fc-modal-header { padding: 0; }
 .fc-inline-detail .fc-modal-body { padding: 0; margin-top: 10px; }
+
+/* ======== HOBIS V6 ADDITIONS ======== */
+
+/* Toolbar */
+.v6-toolbar { display: flex; gap: 5px; align-items: center; }
+
+/* Event form fields */
+.ef-field { margin-bottom: 10px; }
+.ef-field label { display: block; color: #8fa3b0; margin-bottom: 4px; font-size: 0.8rem; }
+.ef-field input, .ef-field select, .ef-field textarea {
+    background: var(--input-bg); border: 1px solid #3c4c56; color: var(--hobis-green);
+    padding: 8px 10px; width: 100%; border-radius: 3px; font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; outline: none;
+}
+.ef-field input:focus, .ef-field select:focus, .ef-field textarea:focus { border-color: var(--hobis-cyan); }
+.ef-field textarea { resize: vertical; min-height: 60px; }
+.ef-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 480px) { .ef-row { grid-template-columns: 1fr; } }
+
+/* Project color picker */
+.proj-color-grid { display: flex; gap: 6px; flex-wrap: wrap; }
+.proj-color-chip {
+    width: 32px; height: 32px; border-radius: 4px; border: 2px solid transparent;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    font-size: 1.2rem; transition: 0.15s;
+}
+.proj-color-chip:hover { transform: scale(1.15); }
+.proj-color-chip.proj-color-active { border-style: solid; box-shadow: 0 0 8px currentColor; }
+
+/* Empty state */
+.v6-empty-state { text-align: center; padding: 30px 10px; color: #5f7481; font-size: 0.9rem; }
+
+/* Storage bar */
+.v6-storage-container {
+    height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; margin-bottom: 8px; overflow: hidden; cursor: help;
+}
+.v6-storage-bar { height: 100%; background: var(--hobis-cyan); border-radius: 2px; transition: width 0.3s; width: 0%; }
+
+/* Calendar cell clickable */
+.fc-cal-cell { cursor: pointer; transition: background 0.1s; }
+.fc-cal-cell:not(.fc-other):hover { background: rgba(0,247,255,0.03); }

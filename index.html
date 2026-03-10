@@ -21,16 +21,16 @@
 
 <div class="container">
     <div class="top-bar">
-        <h1>HOBIS v4.15 patch3</h1>
+        <h1>HOBIS v6.0</h1>
         <button class="fs-btn" onclick="toggleFullScreen()">⛶ FULL SCREEN</button>
     </div>
 
     <!-- TABS -->
     <div class="tabs">
-        <button class="tab-btn active" onclick="setMainTab('decay')">DECAY</button>
-        <button class="tab-btn" onclick="setMainTab('shield')">SHIELD</button>
-        <button class="tab-btn" onclick="setMainTab('logistics')">LOGISTICS</button>
-        <button class="tab-btn" onclick="setMainTab('flowcal')">FLOW CAL</button>
+        <button class="tab-btn active" onclick="setMainTab('calendar', this)">CALENDAR</button>
+        <button class="tab-btn" onclick="setMainTab('decay', this)">DECAY</button>
+        <button class="tab-btn" onclick="setMainTab('shield', this)">SHIELD</button>
+        <button class="tab-btn" onclick="setMainTab('logistics', this)">LOGISTICS</button>
     </div>
 
     <div class="workspace">
@@ -88,15 +88,22 @@
                 <div id="routeContainer"></div>
             </div>
 
-            <!-- FLOW CALENDAR PANEL -->
+            <!-- CALENDAR PANEL -->
             <div id="flowCalPanel" class="panel hidden" style="flex-grow:1;">
-                <div class="header">FLOW CALENDAR</div>
-                <div class="file-upload-box" id="fcLoaderBox">
-                    <label for="fcFile" style="cursor:pointer; color:var(--hobis-cyan); font-weight:bold;">LOAD EVENTS JSON</label>
-                    <input type="file" id="fcFile" accept=".json" style="display:none;" onchange="fcHandleFile(event)">
-                    <div id="fcFileStatus" style="font-size:0.8rem; color:#666; margin-top:4px;">flow_events_web.json</div>
+                <div class="header">CALENDAR
+                    <div class="v6-toolbar">
+                        <button class="btn-outline" style="color:var(--hobis-green); border-color:var(--hobis-green);" onclick="efShowCreate()">+ NEW</button>
+                        <button class="btn-outline" style="color:var(--hobis-cyan); border-color:var(--hobis-cyan);" onclick="projShowModal()">PROJECTS</button>
+                        <button class="btn-outline" onclick="ioExportJson()">EXPORT</button>
+                        <label for="fcFile" class="btn-outline" style="cursor:pointer;">IMPORT</label>
+                    </div>
                 </div>
-                <div id="fcStats" style="font-size:0.8rem; color:#555; margin-bottom:10px;"></div>
+                <input type="file" id="fcFile" accept=".json" style="display:none;" onchange="fcHandleFile(event)">
+                <div id="fcFileStatus" style="font-size:0.7rem; color:#555; margin-bottom:4px;"></div>
+                <div id="fcStats" style="font-size:0.8rem; color:#555; margin-bottom:6px;"></div>
+                <div class="v6-storage-container" title="localStorage usage">
+                    <div class="v6-storage-bar" id="v6StorageBar"></div>
+                </div>
                 <div id="fcWorkspace" style="display:none; flex-direction:column; gap:10px; flex:1;">
                     <!-- Sub tabs: SEARCH / CALENDAR -->
                     <div class="mode-switch" id="fcSubTabs">
@@ -205,6 +212,11 @@
 </div>
 
 <script src="hobis_db.js"></script>
+<script src="js/store.js"></script>
+<script src="js/projects.js"></script>
+<script src="js/event-form.js"></script>
+<script src="js/import-export.js"></script>
+<script src="js/events.js"></script>
 <script src="js/core.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/log.js"></script>
@@ -212,7 +224,6 @@
 <script src="js/calc-ui.js"></script>
 <script src="js/calculator.js"></script>
 <script src="js/logistics.js"></script>
-<script src="js/flow-calendar.js"></script>
 
 </body>
 </html>
