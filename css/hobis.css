@@ -284,6 +284,19 @@ input:focus, select:focus { border-color: var(--hobis-cyan); }
 }
 .v6-storage-bar { height: 100%; background: var(--hobis-cyan); border-radius: 2px; transition: width 0.3s; width: 0%; }
 
+/* Attendee chip UI (event form) */
+.ef-att-container { display: flex; flex-wrap: wrap; gap: 6px; min-height: 32px; padding: 6px; background: var(--input-bg, #0d1117); border: 1px solid #3c4c56; border-radius: 3px; margin-bottom: 6px; }
+.ef-att-empty { color: #5f7481; font-size: 0.8rem; }
+.ef-att-chip { display: flex; align-items: center; gap: 4px; padding: 3px 8px; border: 1px solid; border-radius: 3px; font-size: 0.75rem; background: rgba(0,0,0,0.2); }
+.ef-att-name { color: #e0e0e0; font-weight: bold; }
+.ef-att-email { color: #5f7481; font-size: 0.7rem; }
+.ef-att-status { background: transparent; border: none; color: inherit; font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; cursor: pointer; padding: 0 2px; outline: none; }
+.ef-att-del { background: none; border: none; color: var(--hobis-alert); cursor: pointer; font-size: 0.9rem; padding: 0 2px; line-height: 1; }
+.ef-att-del:hover { opacity: 0.7; }
+.ef-att-input-row { display: flex; gap: 6px; }
+.ef-att-input-row input { flex: 1; }
+.ef-att-add-btn { padding: 6px 12px !important; font-size: 1rem !important; }
+
 /* Calendar cell clickable */
 .fc-cal-cell { cursor: pointer; transition: background 0.1s; }
 .fc-cal-cell:not(.fc-other):hover { background: rgba(0,247,255,0.03); }

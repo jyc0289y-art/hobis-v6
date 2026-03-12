@@ -1,10 +1,15 @@
 // --- HOBIS V6 STORE MODULE ---
-// localStorage-based persistence layer for projects and events
+// IndexedDB-based persistence layer for projects and events
+// Falls back to localStorage if IndexedDB is unavailable
 
 const STORE_KEY = 'hobis_v6';
 const STORE_VERSION = '1.0.0';
+const IDB_NAME = 'hobis_v6_db';
+const IDB_VERSION = 1;
+const IDB_STORE = 'data';
 
 let _storeData = null;
+let _idb = null;
 
 function generateId(prefix) {
     const hex = Array.from(crypto.getRandomValues(new Uint8Array(8)))
@@ -16,39 +21,134 @@ function _storeDefault() {
     return { projects: [], events: [], meta: { version: STORE_VERSION, lastModified: new Date().toISOString() } };
 }
 
+// --- IndexedDB ---
+function _openIDB() {
+    return new Promise(function(resolve, reject) {
+        if (_idb) { resolve(_idb); return; }
+        var req = indexedDB.open(IDB_NAME, IDB_VERSION);
+        req.onupgradeneeded = function(e) {
+            var db = e.target.result;
+            if (!db.objectStoreNames.contains(IDB_STORE)) {
+                db.createObjectStore(IDB_STORE);
+            }
+        };
+        req.onsuccess = function(e) {
+            _idb = e.target.result;
+            resolve(_idb);
+        };
+        req.onerror = function(e) {
+            console.warn('IndexedDB open error:', e.target.error);
+            reject(e.target.error);
+        };
+    });
+}
+
+function _idbGet(db) {
+    return new Promise(function(resolve, reject) {
+        var tx = db.transaction(IDB_STORE, 'readonly');
+        var store = tx.objectStore(IDB_STORE);
+        var req = store.get(STORE_KEY);
+        req.onsuccess = function() { resolve(req.result || null); };
+        req.onerror = function() { reject(req.error); };
+    });
+}
+
+function _idbPut(db, data) {
+    return new Promise(function(resolve, reject) {
+        var tx = db.transaction(IDB_STORE, 'readwrite');
+        var store = tx.objectStore(IDB_STORE);
+        var req = store.put(data, STORE_KEY);
+        req.onsuccess = function() { resolve(); };
+        req.onerror = function() { reject(req.error); };
+    });
+}
+
+// --- Load (async, returns Promise) ---
 function storeLoad() {
+    return _openIDB().then(function(db) {
+        return _idbGet(db).then(function(data) {
+            if (data) {
+                _storeData = data;
+                _validateStoreData();
+                console.log('Store loaded from IndexedDB (' + _storeData.events.length + ' events)');
+                return _storeData;
+            }
+            // No data in IDB — try migrating from localStorage
+            return _migrateFromLocalStorage();
+        });
+    }).catch(function(err) {
+        console.warn('IndexedDB unavailable, falling back to localStorage:', err);
+        _idb = null;
+        return _loadFromLocalStorage();
+    });
+}
+
+function _migrateFromLocalStorage() {
     try {
-        const raw = localStorage.getItem(STORE_KEY);
+        var raw = localStorage.getItem(STORE_KEY);
+        if (raw) {
+            _storeData = JSON.parse(raw);
+            _validateStoreData();
+            console.log('Migrating ' + _storeData.events.length + ' events from localStorage to IndexedDB...');
+            // Save to IDB, then clear localStorage
+            return _idbPut(_idb, _storeData).then(function() {
+                localStorage.removeItem(STORE_KEY);
+                console.log('Migration complete. localStorage cleared.');
+                return _storeData;
+            });
+        }
+    } catch (e) {
+        console.error('localStorage migration error:', e);
+    }
+    _storeData = _storeDefault();
+    return Promise.resolve(_storeData);
+}
+
+function _loadFromLocalStorage() {
+    try {
+        var raw = localStorage.getItem(STORE_KEY);
         _storeData = raw ? JSON.parse(raw) : _storeDefault();
-        if (!_storeData.meta) _storeData.meta = { version: STORE_VERSION, lastModified: new Date().toISOString() };
-        if (!_storeData.projects) _storeData.projects = [];
-        if (!_storeData.events) _storeData.events = [];
     } catch (e) {
         console.error('Store load error:', e);
         _storeData = _storeDefault();
     }
+    _validateStoreData();
     return _storeData;
 }
 
+function _validateStoreData() {
+    if (!_storeData.meta) _storeData.meta = { version: STORE_VERSION, lastModified: new Date().toISOString() };
+    if (!_storeData.projects) _storeData.projects = [];
+    if (!_storeData.events) _storeData.events = [];
+}
+
+// --- Save (fire-and-forget async) ---
 function storeSave() {
     if (!_storeData) return;
     _storeData.meta.lastModified = new Date().toISOString();
-    try {
-        localStorage.setItem(STORE_KEY, JSON.stringify(_storeData));
-    } catch (e) {
-        console.error('Store save error:', e);
-        alert('localStorage 저장 실패. 용량이 부족할 수 있습니다.');
+    if (_idb) {
+        _idbPut(_idb, _storeData).catch(function(err) {
+            console.error('IndexedDB save error:', err);
+        });
+    } else {
+        // Fallback: localStorage
+        try {
+            localStorage.setItem(STORE_KEY, JSON.stringify(_storeData));
+        } catch (e) {
+            console.error('Store save error:', e);
+            alert('localStorage 저장 실패. 용량이 부족할 수 있습니다.');
+        }
     }
 }
 
-function storeGetData() { return _storeData || storeLoad(); }
+function storeGetData() { return _storeData || _storeDefault(); }
 function storeGetProjects() { return storeGetData().projects; }
 function storeGetEvents() { return storeGetData().events; }
 
 // --- Projects ---
 function storeCreateProject(opts) {
-    const data = storeGetData();
-    const proj = {
+    var data = storeGetData();
+    var proj = {
         id: generateId('pj_'),
         name: opts.name || 'Untitled',
         color: opts.color || '#00f7ff',
@@ -60,8 +160,8 @@ function storeCreateProject(opts) {
 }
 
 function storeUpdateProject(id, changes) {
-    const data = storeGetData();
-    const idx = data.projects.findIndex(p => p.id === id);
+    var data = storeGetData();
+    var idx = data.projects.findIndex(function(p) { return p.id === id; });
     if (idx === -1) return null;
     Object.assign(data.projects[idx], changes);
     storeSave();
@@ -69,24 +169,23 @@ function storeUpdateProject(id, changes) {
 }
 
 function storeDeleteProject(id) {
-    const data = storeGetData();
-    const idx = data.projects.findIndex(p => p.id === id);
+    var data = storeGetData();
+    var idx = data.projects.findIndex(function(p) { return p.id === id; });
     if (idx === -1) return false;
     data.projects.splice(idx, 1);
-    // Clear projectId on orphaned events
-    data.events.forEach(ev => { if (ev.projectId === id) ev.projectId = null; });
+    data.events.forEach(function(ev) { if (ev.projectId === id) ev.projectId = null; });
     storeSave();
     return true;
 }
 
 function storeFindProject(id) {
-    return storeGetProjects().find(p => p.id === id) || null;
+    return storeGetProjects().find(function(p) { return p.id === id; }) || null;
 }
 
 // --- Events ---
 function storeCreateEvent(opts) {
-    const data = storeGetData();
-    const ev = {
+    var data = storeGetData();
+    var ev = {
         id: generateId('ev_'),
         title: opts.title || '',
         description: opts.description || '',
@@ -109,8 +208,8 @@ function storeCreateEvent(opts) {
 }
 
 function storeUpdateEvent(id, changes) {
-    const data = storeGetData();
-    const idx = data.events.findIndex(e => e.id === id);
+    var data = storeGetData();
+    var idx = data.events.findIndex(function(e) { return e.id === id; });
     if (idx === -1) return null;
     Object.assign(data.events[idx], changes);
     if (changes.start || changes.end) {
@@ -121,8 +220,8 @@ function storeUpdateEvent(id, changes) {
 }
 
 function storeDeleteEvent(id) {
-    const data = storeGetData();
-    const idx = data.events.findIndex(e => e.id === id);
+    var data = storeGetData();
+    var idx = data.events.findIndex(function(e) { return e.id === id; });
     if (idx === -1) return false;
     data.events.splice(idx, 1);
     storeSave();
@@ -130,30 +229,40 @@ function storeDeleteEvent(id) {
 }
 
 function storeFindEvent(id) {
-    return storeGetEvents().find(e => e.id === id) || null;
+    return storeGetEvents().find(function(e) { return e.id === id; }) || null;
 }
 
-// --- Import Flow JSON ---
+// --- Import Flow JSON (with deduplication) ---
 function storeImportFlowJson(flowArray) {
-    if (!Array.isArray(flowArray)) return { imported: 0 };
-    const data = storeGetData();
-    const projMap = {};
-    // Build existing project name->id map
-    data.projects.forEach(p => { projMap[p.name] = p.id; });
+    if (!Array.isArray(flowArray)) return { imported: 0, skipped: 0 };
+    var data = storeGetData();
+    var projMap = {};
+    data.projects.forEach(function(p) { projMap[p.name] = p.id; });
 
-    let imported = 0;
-    flowArray.forEach(fev => {
-        // Create project if needed
-        let projectId = null;
+    // Build existing flowId set for dedup
+    var existingFlowIds = {};
+    data.events.forEach(function(ev) {
+        if (ev.flowId) existingFlowIds[ev.flowId] = true;
+    });
+
+    var imported = 0;
+    var skipped = 0;
+    flowArray.forEach(function(fev) {
+        // Skip duplicates by flowId
+        if (fev.id && existingFlowIds[fev.id]) {
+            skipped++;
+            return;
+        }
+
+        var projectId = null;
         if (fev.project) {
             if (!projMap[fev.project]) {
-                const newProj = storeCreateProject({ name: fev.project, color: _autoColor(data.projects.length) });
+                var newProj = storeCreateProject({ name: fev.project, color: _autoColor(data.projects.length) });
                 projMap[fev.project] = newProj.id;
             }
             projectId = projMap[fev.project];
         }
-        // Create event
-        const ev = {
+        var ev = {
             id: generateId('ev_'),
             title: fev.title || '',
             description: fev.description || '',
@@ -172,20 +281,21 @@ function storeImportFlowJson(flowArray) {
             flowId: fev.id
         };
         data.events.push(ev);
+        if (fev.id) existingFlowIds[fev.id] = true;
         imported++;
     });
-    // Save import metadata for persistence across refresh
     data.meta.lastImport = {
-        filename: null, // will be set by caller (fcHandleFile)
+        filename: null,
         date: new Date().toISOString(),
-        count: imported
+        count: imported,
+        skipped: skipped
     };
     storeSave();
-    return { imported };
+    return { imported: imported, skipped: skipped };
 }
 
 function storeSetImportMeta(filename) {
-    const data = storeGetData();
+    var data = storeGetData();
     if (data.meta.lastImport) {
         data.meta.lastImport.filename = filename;
         storeSave();
@@ -193,13 +303,13 @@ function storeSetImportMeta(filename) {
 }
 
 function storeGetImportMeta() {
-    const data = storeGetData();
+    var data = storeGetData();
     return data.meta.lastImport || null;
 }
 
 // --- Comments ---
 function storeAddComment(eventId, comment) {
-    const ev = storeFindEvent(eventId);
+    var ev = storeFindEvent(eventId);
     if (!ev) return null;
     if (!ev.comments) ev.comments = [];
     comment.id = generateId('cm_');
@@ -210,9 +320,9 @@ function storeAddComment(eventId, comment) {
 }
 
 function storeUpdateComment(eventId, commentId, changes) {
-    const ev = storeFindEvent(eventId);
+    var ev = storeFindEvent(eventId);
     if (!ev || !ev.comments) return null;
-    const c = ev.comments.find(c => c.id === commentId);
+    var c = ev.comments.find(function(c) { return c.id === commentId; });
     if (!c) return null;
     Object.assign(c, changes);
     storeSave();
@@ -220,13 +330,58 @@ function storeUpdateComment(eventId, commentId, changes) {
 }
 
 function storeDeleteComment(eventId, commentId) {
-    const ev = storeFindEvent(eventId);
+    var ev = storeFindEvent(eventId);
     if (!ev || !ev.comments) return false;
-    const idx = ev.comments.findIndex(c => c.id === commentId);
+    var idx = ev.comments.findIndex(function(c) { return c.id === commentId; });
     if (idx === -1) return false;
     ev.comments.splice(idx, 1);
     storeSave();
     return true;
+}
+
+// --- Dedup cleanup (for fixing already-duplicated data) ---
+function storeDedup() {
+    var data = storeGetData();
+    var seen = {};
+    var kept = [];
+    var removed = 0;
+    data.events.forEach(function(ev) {
+        // For flow-imported events, dedup by flowId
+        if (ev.flowId) {
+            if (seen[ev.flowId]) { removed++; return; }
+            seen[ev.flowId] = true;
+        }
+        // For v6-created events, keep all (they have unique IDs)
+        kept.push(ev);
+    });
+    data.events = kept;
+
+    // Dedup projects by name
+    var projSeen = {};
+    var projKept = [];
+    var projRemoved = 0;
+    data.projects.forEach(function(p) {
+        if (projSeen[p.name]) { projRemoved++; return; }
+        projSeen[p.name] = true;
+        projKept.push(p);
+    });
+    // Remap events to surviving project IDs
+    if (projRemoved > 0) {
+        var nameToId = {};
+        projKept.forEach(function(p) { nameToId[p.name] = p.id; });
+        data.events.forEach(function(ev) {
+            if (ev.projectId) {
+                var proj = data.projects.find(function(p) { return p.id === ev.projectId; });
+                if (proj && nameToId[proj.name] && nameToId[proj.name] !== ev.projectId) {
+                    ev.projectId = nameToId[proj.name];
+                }
+            }
+        });
+        data.projects = projKept;
+    }
+
+    storeSave();
+    return { eventsRemoved: removed, projectsRemoved: projRemoved, eventsKept: kept.length, projectsKept: projKept.length };
 }
 
 // --- Export ---
@@ -236,21 +391,22 @@ function storeExportAll() {
 
 // --- Usage ---
 function storeGetUsage() {
-    const raw = localStorage.getItem(STORE_KEY) || '';
-    const bytes = new Blob([raw]).size;
-    const maxBytes = 5 * 1024 * 1024; // ~5MB
-    return { bytes, maxBytes, percent: Math.round((bytes / maxBytes) * 100) };
+    // Estimate from in-memory data (works for both IDB and localStorage)
+    var raw = JSON.stringify(_storeData || {});
+    var bytes = new Blob([raw]).size;
+    var maxBytes = _idb ? 50 * 1024 * 1024 : 5 * 1024 * 1024; // 50MB for IDB, 5MB for localStorage
+    return { bytes: bytes, maxBytes: maxBytes, percent: Math.round((bytes / maxBytes) * 100), backend: _idb ? 'IndexedDB' : 'localStorage' };
 }
 
 // --- Helpers ---
 function _buildDateText(start, end) {
     if (!start) return '';
-    const s = start.substring(0, 10);
-    const e = end ? end.substring(0, 10) : '';
-    return e && e !== s ? `${s} ~ ${e}` : s;
+    var s = start.substring(0, 10);
+    var e = end ? end.substring(0, 10) : '';
+    return e && e !== s ? (s + ' ~ ' + e) : s;
 }
 
-const _AUTO_COLORS = ['#00f7ff', '#00ff33', '#ffcc00', '#ff3300', '#a064ff', '#ff64c8', '#ff9933', '#33ccff'];
+var _AUTO_COLORS = ['#00f7ff', '#00ff33', '#ffcc00', '#ff3300', '#a064ff', '#ff64c8', '#ff9933', '#33ccff'];
 function _autoColor(index) {
     return _AUTO_COLORS[index % _AUTO_COLORS.length];
 }

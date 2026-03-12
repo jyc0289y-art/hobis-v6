@@ -18,9 +18,11 @@ function toggleFullScreen() {
 }
 
 window.onload = function() {
-    // V6: Initialize store and calendar
-    storeLoad();
-    evInitApp();
+    // V6: Initialize store (async — IndexedDB) then calendar
+    storeLoad().then(function() {
+        evInitApp();
+        setMainTab('calendar');
+    });
 
     if (typeof GLOBAL_DB === 'undefined') {
         console.warn("DB not loaded - calculation modules unavailable");
@@ -37,9 +39,6 @@ window.onload = function() {
             }
         }, 500);
     }
-
-    // Set calendar as initial active tab
-    setMainTab('calendar');
 };
 
 function loadDB() {

@@ -26,6 +26,12 @@ const FC_FILTER_FIELDS = [
 
 // --- INITIALIZATION ---
 function evInitApp() {
+    // Auto-dedup on load (fixes previously duplicated imports)
+    var dedupResult = storeDedup();
+    if (dedupResult.eventsRemoved > 0 || dedupResult.projectsRemoved > 0) {
+        console.log('Auto-dedup: removed ' + dedupResult.eventsRemoved + ' duplicate events, ' + dedupResult.projectsRemoved + ' duplicate projects');
+    }
+
     fcData = storeGetEvents();
     evBuildProjectMap();
 
@@ -88,7 +94,7 @@ function evUpdateStats() {
     const storageEl = document.getElementById('v6StorageBar');
     if (storageEl) {
         storageEl.style.width = usage.percent + '%';
-        storageEl.parentElement.title = 'localStorage: ' + (usage.bytes / 1024).toFixed(1) + 'KB / ' + (usage.maxBytes / 1024 / 1024).toFixed(0) + 'MB (' + usage.percent + '%)';
+        storageEl.parentElement.title = (usage.backend || 'localStorage') + ': ' + (usage.bytes / 1024).toFixed(1) + 'KB / ' + (usage.maxBytes / 1024 / 1024).toFixed(0) + 'MB (' + usage.percent + '%)';
     }
 }
 
@@ -105,7 +111,10 @@ function fcHandleFile(event) {
             if (Array.isArray(parsed)) {
                 const result = storeImportFlowJson(parsed);
                 storeSetImportMeta(file.name);
-                document.getElementById('fcFileStatus').textContent = 'IMPORTED: ' + result.imported + ' EVENTS (' + file.name + ')';
+                var statusMsg = 'IMPORTED: ' + result.imported + ' EVENTS';
+                if (result.skipped > 0) statusMsg += ' (SKIPPED: ' + result.skipped + ' DUPES)';
+                statusMsg += ' — ' + file.name;
+                document.getElementById('fcFileStatus').textContent = statusMsg;
                 document.getElementById('fcFileStatus').style.color = 'var(--hobis-green)';
                 evRefresh();
             } else if (parsed.meta && parsed.meta.version) {

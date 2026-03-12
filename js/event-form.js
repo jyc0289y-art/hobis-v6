@@ -2,6 +2,7 @@
 // Modal form for creating and editing events
 
 let _efEditId = null;
+let _efAttendees = []; // { name, email, status }
 
 function efShowCreate(prefillDate) {
     _efEditId = null;
@@ -82,8 +83,12 @@ function _efRenderModal(ev, prefillDate) {
                     <textarea id="efDesc" rows="4" placeholder="일정 설명...">${isEdit ? fcEsc(ev.description || '') : ''}</textarea>
                 </div>
                 <div class="ef-field">
-                    <label>참석자 (쉼표로 구분)</label>
-                    <input type="text" id="efAttendees" value="${isEdit ? (ev.attendees || []).map(a => a.name || a.email || a).join(', ') : ''}" placeholder="홍길동, 김철수...">
+                    <label>참석자</label>
+                    <div class="ef-att-container" id="efAttContainer"></div>
+                    <div class="ef-att-input-row">
+                        <input type="text" id="efAttInput" placeholder="이름 입력 후 Enter..." onkeydown="efAttKeydown(event)">
+                        <button type="button" class="btn-outline ef-att-add-btn" onclick="efAddAttendee()">+</button>
+                    </div>
                 </div>
                 <div style="display:flex; gap:8px; margin-top:16px;">
                     <button class="btn" style="flex:1;" onclick="efDoSave()">
@@ -98,6 +103,15 @@ function _efRenderModal(ev, prefillDate) {
 
     // Populate project dropdown
     projRenderDropdown(document.getElementById('efProject'), ev ? ev.projectId : '');
+
+    // Init attendees chip UI
+    _efAttendees = isEdit ? (ev.attendees || []).map(a => ({
+        name: a.name || '',
+        email: a.email || '',
+        status: a.status || '미정'
+    })) : [];
+    efRenderAttChips();
+
     document.getElementById('efTitle').focus();
 }
 
@@ -113,9 +127,8 @@ function efDoSave() {
     const start = startDate ? (startTime ? `${startDate}T${startTime}` : startDate) : '';
     const end = endDate ? (endTime ? `${endDate}T${endTime}` : endDate) : '';
 
-    // Parse attendees
-    const attStr = document.getElementById('efAttendees').value.trim();
-    const attendees = attStr ? attStr.split(',').map(s => s.trim()).filter(Boolean).map(name => ({ name, status: '미정' })) : [];
+    // Use chip-based attendees
+    const attendees = _efAttendees.slice();
 
     const data = {
         title,
@@ -145,6 +158,62 @@ function efDoDelete() {
     efClose();
     fcCloseDetail();
     if (typeof evRefresh === 'function') evRefresh();
+}
+
+// --- Attendee chip UI ---
+function efRenderAttChips() {
+    const container = document.getElementById('efAttContainer');
+    if (!container) return;
+    if (_efAttendees.length === 0) {
+        container.innerHTML = '<span class="ef-att-empty">참석자가 없습니다</span>';
+        return;
+    }
+    container.innerHTML = _efAttendees.map((a, i) => {
+        const statusColors = { '참석': 'var(--hobis-green)', '불참': 'var(--hobis-alert)', '미정': 'var(--hobis-warn)' };
+        const color = statusColors[a.status] || 'var(--hobis-warn)';
+        return '<div class="ef-att-chip" style="border-color:' + color + ';">' +
+            '<span class="ef-att-name">' + fcEsc(a.name) + '</span>' +
+            (a.email ? '<span class="ef-att-email">' + fcEsc(a.email) + '</span>' : '') +
+            '<select class="ef-att-status" onchange="efAttStatus(' + i + ',this.value)" style="color:' + color + ';">' +
+                '<option value="미정"' + (a.status === '미정' ? ' selected' : '') + '>미정</option>' +
+                '<option value="참석"' + (a.status === '참석' ? ' selected' : '') + '>참석</option>' +
+                '<option value="불참"' + (a.status === '불참' ? ' selected' : '') + '>불참</option>' +
+            '</select>' +
+            '<button class="ef-att-del" onclick="efRemoveAtt(' + i + ')">&times;</button>' +
+        '</div>';
+    }).join('');
+}
+
+function efAttKeydown(e) {
+    if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        efAddAttendee();
+    }
+}
+
+function efAddAttendee() {
+    const input = document.getElementById('efAttInput');
+    if (!input) return;
+    const raw = input.value.replace(/,/g, '').trim();
+    if (!raw) return;
+    // Parse "이름 <email>" format
+    const emailMatch = raw.match(/^(.+?)\s*<([^>]+)>$/);
+    let name = raw, email = '';
+    if (emailMatch) { name = emailMatch[1].trim(); email = emailMatch[2].trim(); }
+    _efAttendees.push({ name, email, status: '미정' });
+    input.value = '';
+    efRenderAttChips();
+    input.focus();
+}
+
+function efRemoveAtt(index) {
+    _efAttendees.splice(index, 1);
+    efRenderAttChips();
+}
+
+function efAttStatus(index, value) {
+    if (_efAttendees[index]) _efAttendees[index].status = value;
+    efRenderAttChips();
 }
 
 function efClose() {
