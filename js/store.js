@@ -247,17 +247,38 @@ function storeImportFlowJson(flowArray) {
 
     var imported = 0;
     var skipped = 0;
+    // Also build title+start index for events without flowId
+    var existingTitleStart = {};
+    data.events.forEach(function(ev) {
+        if (!ev.flowId && ev.title && ev.start) {
+            existingTitleStart[ev.title + '|' + ev.start] = true;
+        }
+    });
+
     flowArray.forEach(function(fev) {
         // Skip duplicates by flowId
         if (fev.id && existingFlowIds[fev.id]) {
             skipped++;
             return;
         }
+        // For events without flowId, dedup by title+start
+        if (!fev.id && fev.title && fev.start) {
+            var key = fev.title + '|' + fev.start;
+            if (existingTitleStart[key]) { skipped++; return; }
+            existingTitleStart[key] = true;
+        }
 
         var projectId = null;
         if (fev.project) {
             if (!projMap[fev.project]) {
-                var newProj = storeCreateProject({ name: fev.project, color: _autoColor(data.projects.length) });
+                // Create project inline (avoid storeSave per project)
+                var newProj = {
+                    id: generateId('pj_'),
+                    name: fev.project,
+                    color: _autoColor(data.projects.length),
+                    createdAt: new Date().toISOString()
+                };
+                data.projects.push(newProj);
                 projMap[fev.project] = newProj.id;
             }
             projectId = projMap[fev.project];
@@ -382,6 +403,14 @@ function storeDedup() {
 
     storeSave();
     return { eventsRemoved: removed, projectsRemoved: projRemoved, eventsKept: kept.length, projectsKept: projKept.length };
+}
+
+// --- Replace entire data (for v6 format import) ---
+function storeReplaceData(newData) {
+    _storeData = newData;
+    _validateStoreData();
+    storeSave();
+    return _storeData;
 }
 
 // --- Export ---

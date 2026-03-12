@@ -4,7 +4,7 @@
 let fcData = [];
 let fcProjects = [];
 let fcProjectMap = {};
-let fcCurrentTab = 'search';
+let fcCurrentTab = 'calendar';
 let fcCalYear, fcCalMonth;
 let fcSelectedId = null;
 let fcLastResults = [];
@@ -63,6 +63,8 @@ function evInitApp() {
     if (filterRows && filterRows.children.length === 0) fcAddFilter();
     fcDoSearch();
     fcRenderCalendar();
+    // Default to calendar sub-tab
+    fcSetSubTab('calendar');
 }
 
 function evBuildProjectMap() {
@@ -119,8 +121,7 @@ function fcHandleFile(event) {
                 evRefresh();
             } else if (parsed.meta && parsed.meta.version) {
                 if (confirm('v6 데이터 파일입니다. 현재 데이터를 교체하시겠습니까?\n(' + (parsed.events ? parsed.events.length : 0) + '개 일정, ' + (parsed.projects ? parsed.projects.length : 0) + '개 프로젝트)')) {
-                    localStorage.setItem(STORE_KEY, JSON.stringify(parsed));
-                    storeLoad();
+                    storeReplaceData(parsed);
                     storeSetImportMeta(file.name);
                     evRefresh();
                     document.getElementById('fcFileStatus').textContent = 'LOADED: ' + parsed.events.length + ' EVENTS (' + file.name + ')';
@@ -535,9 +536,29 @@ function fcShowDayEvents(day) {
         const target = new Date(fcCalYear, fcCalMonth, day);
         return target >= startD && target < endD;
     });
-    fcSetSubTab('search');
-    document.getElementById('fcResultCount').textContent = fcCalYear + '.' + String(fcCalMonth+1).padStart(2,'0') + '.' + String(day).padStart(2,'0') + ': ' + dayEvents.length + ' EVENTS';
-    fcRenderEventList(dayEvents);
+    // Show as overlay on calendar instead of switching to search tab
+    fcCloseDayOverlay();
+    const dateStr = fcCalYear + '.' + String(fcCalMonth+1).padStart(2,'0') + '.' + String(day).padStart(2,'0');
+    let listHtml = dayEvents.map(ev => fcMakeEventHtml(ev)).join('');
+    if (!listHtml) listHtml = '<div class="v6-empty-state">이 날짜에 일정이 없습니다</div>';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'fc-day-overlay';
+    overlay.id = 'fcDayOverlay';
+    overlay.innerHTML = '<div class="fc-day-overlay-panel">' +
+        '<div class="fc-modal-header">' +
+            '<span class="fc-modal-title">' + dateStr + ' — ' + dayEvents.length + ' EVENTS</span>' +
+            '<button class="fc-modal-close" onclick="fcCloseDayOverlay()">&times; CLOSE</button>' +
+        '</div>' +
+        '<div class="fc-day-overlay-list">' + listHtml + '</div>' +
+    '</div>';
+    overlay.addEventListener('click', function(e) { if (e.target === overlay) fcCloseDayOverlay(); });
+    document.body.appendChild(overlay);
+}
+
+function fcCloseDayOverlay() {
+    var el = document.getElementById('fcDayOverlay');
+    if (el) el.remove();
 }
 
 // --- Comment CRUD ---

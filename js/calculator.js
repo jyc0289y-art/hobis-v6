@@ -84,7 +84,7 @@ function calculate() {
                 if (inType === 'act') val = v * UNIT_ACT[r.querySelector('.src-unit').value];
                 else val = v * UNIT_DOSE[r.querySelector('.src-unit').value];
                 srcs.push({ n: n, val: val });
-                reportSpecHTML += `<div class="spec-row"><span class="spec-key">${n.id}</span> <span class="spec-val">Γ=${n.gamma}</span></div>`;
+                reportSpecHTML += `<div class="spec-row"><span class="spec-key">${n.id}</span> <span class="spec-val">Γ=${n.gamma} mSv·m²/h·Ci</span></div>`;
             }
         });
         document.querySelectorAll('.shield-layer').forEach(r => {
@@ -125,6 +125,7 @@ function calculate() {
             const yAxisLabel = ot === 'dose' ? `Dose Rate (${ou})` : `Activity (${ou})`;
             for (let i = 0; i <= 100; i++) {
                 let x = i * (maxThk / 100), sum = 0;
+                L.push(x.toFixed(1));
                 srcs.forEach(s => {
                     let tr = 1.0, h1 = (s.n.hvl && s.n.hvl[pm]) ? s.n.hvl[pm] : 0;
                     if (h1 > 0) tr *= Math.pow(0.5, x / h1);
@@ -173,7 +174,7 @@ function calculate() {
                     addToLog(entry);
 
                     // Spec Report Injection (PATCH 3)
-                    document.getElementById('specReportBox').innerHTML = `<div class="spec-report"><div class="spec-row"><span class="spec-key">${n.id}:</span> <span class="spec-val">Γ=${n.gamma}</span></div><div class="spec-row"><span class="spec-key">${mat} HVL:</span> <span class="spec-val">${h}mm</span></div></div>`;
+                    document.getElementById('specReportBox').innerHTML = `<div class="spec-report"><div class="spec-row"><span class="spec-key">${n.id}:</span> <span class="spec-val">Γ=${n.gamma} mSv·m²/h·Ci</span></div><div class="spec-row"><span class="spec-key">${mat} HVL:</span> <span class="spec-val">${h}mm</span></div></div>`;
 
                     const L = [], D = [];
                     const yAxisLabel = document.getElementById('targetType').value === 'dose'
