@@ -69,18 +69,25 @@ function setMainTab(t, btn) {
     document.getElementById('flowCalDetailPanel').classList.add('hidden');
     document.getElementById('fcEmptyDetail').classList.add('hidden');
     document.getElementById('logPanel').classList.add('hidden');
+    document.getElementById('orderPanel').classList.add('hidden');
 
-    // FC mode: full-width layout for calendar
+    // FC mode: full-width layout for calendar and order
     const ws = document.querySelector('.workspace');
     if (t === 'flowcal') {
         ws.classList.add('fc-mode');
         document.getElementById('flowCalPanel').classList.remove('hidden');
+    } else if (t === 'order') {
+        ws.classList.add('fc-mode');
     } else {
         ws.classList.remove('fc-mode');
     }
 
     if (t === 'flowcal') {
         // already handled above
+    } else if (t === 'order') {
+        ws.classList.add('fc-mode');
+        document.getElementById('orderPanel').classList.remove('hidden');
+        roInit();
     } else if (t === 'logistics') {
         document.getElementById('logPanel').classList.remove('hidden');
         document.getElementById('logisticsLeftPanel').classList.remove('hidden');

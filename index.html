@@ -12,6 +12,7 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -31,6 +32,7 @@
         <button class="tab-btn" onclick="setMainTab('decay', this)">DECAY</button>
         <button class="tab-btn" onclick="setMainTab('shield', this)">SHIELD</button>
         <button class="tab-btn" onclick="setMainTab('logistics', this)">LOGISTICS</button>
+        <button class="tab-btn" onclick="setMainTab('order', this)">ORDER</button>
     </div>
 
     <div class="workspace">
@@ -140,6 +142,52 @@
                 </div>
             </div>
 
+            <!-- ORDER PANEL -->
+            <div id="orderPanel" class="panel hidden" style="flex-grow:1;">
+                <div class="header">RI-ORDER AGGREGATION</div>
+                <!-- Settings -->
+                <div class="ro-settings">
+                    <div class="ro-settings-row">
+                        <div class="ro-setting-group">
+                            <label>File Import</label>
+                            <div class="ro-file-area">
+                                <label for="roFileInput" class="btn-outline" style="cursor:pointer; color:var(--hobis-cyan); border-color:var(--hobis-cyan);">SELECT FILE (.xls / .htm)</label>
+                                <input type="file" id="roFileInput" accept=".xls,.xlsx,.csv,.htm,.html" style="display:none;" onchange="roHandleFile(event)">
+                                <span id="roFileStatus" style="font-size:0.8rem; color:#5f7481; margin-left:8px;">No file loaded</span>
+                            </div>
+                        </div>
+                        <div class="ro-setting-group">
+                            <label>Aggregation Period (Purchase Date)</label>
+                            <div class="ro-date-row">
+                                <input type="date" id="roDateStart" value="2026-03-01">
+                                <span style="color:#5f7481;">~</span>
+                                <input type="date" id="roDateEnd" value="2026-03-15">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ro-settings-row">
+                        <div class="ro-setting-group">
+                            <label>Special Company Name</label>
+                            <input type="text" id="roCompanyInput" placeholder="Enter company name to match...">
+                        </div>
+                        <div class="ro-setting-group">
+                            <label>Google Sheet URL <button class="btn-outline" style="font-size:0.7rem; padding:2px 6px;" onclick="roOpenSheet()">OPEN</button></label>
+                            <input type="text" id="roSheetUrl" placeholder="Paste URL here (stored locally only)">
+                        </div>
+                    </div>
+                    <div class="ro-action-row">
+                        <button class="btn-outline" style="color:var(--hobis-cyan); border-color:var(--hobis-cyan);" onclick="roSaveSettings()">SAVE SETTINGS</button>
+                        <button class="btn ro-exec-btn" onclick="roAggregate()">AGGREGATE</button>
+                    </div>
+                </div>
+                <!-- Results -->
+                <div id="roResults" class="ro-results">
+                    <div class="placeholder-box" style="min-height:200px;">Import file and click AGGREGATE</div>
+                </div>
+                <!-- Toast -->
+                <div id="roToast" class="ro-toast hidden"></div>
+            </div>
+
             <!-- LOG -->
             <div id="logPanel" class="panel">
                 <div class="header">
@@ -224,6 +272,7 @@
 <script src="js/calc-ui.js"></script>
 <script src="js/calculator.js"></script>
 <script src="js/logistics.js"></script>
+<script src="js/ri-order.js"></script>
 
 </body>
 </html>

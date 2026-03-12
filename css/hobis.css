@@ -307,3 +307,47 @@ input:focus, select:focus { border-color: var(--hobis-cyan); }
 .fc-day-overlay-panel::before { content:""; position:absolute; top:-1px; left:-1px; width:10px; height:10px; border-top:2px solid var(--hobis-cyan); border-left:2px solid var(--hobis-cyan); }
 .fc-day-overlay-panel::after { content:""; position:absolute; bottom:-1px; right:-1px; width:10px; height:10px; border-bottom:2px solid var(--hobis-cyan); border-right:2px solid var(--hobis-cyan); }
 .fc-day-overlay-list { display: flex; flex-direction: column; gap: 3px; margin-top: 10px; }
+
+/* ======== RI-ORDER MODULE ======== */
+
+.ro-settings { margin-bottom: 15px; }
+.ro-settings-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+@media (max-width: 768px) { .ro-settings-row { grid-template-columns: 1fr; } }
+.ro-setting-group { }
+.ro-setting-group label { display: flex; align-items: center; gap: 6px; color: #8fa3b0; margin-bottom: 4px; font-size: 0.8rem; }
+.ro-setting-group input[type="text"],
+.ro-setting-group input[type="date"] { background: var(--input-bg); border: 1px solid #3c4c56; color: var(--hobis-green); padding: 8px 10px; width: 100%; border-radius: 3px; font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; outline: none; }
+.ro-setting-group input:focus { border-color: var(--hobis-cyan); }
+.ro-file-area { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.ro-date-row { display: flex; align-items: center; gap: 8px; }
+.ro-date-row input { flex: 1; }
+.ro-action-row { display: flex; gap: 10px; align-items: center; justify-content: flex-end; margin-top: 5px; }
+.ro-exec-btn { width: auto !important; padding: 10px 30px !important; margin-top: 0 !important; }
+
+/* Tables */
+.ro-results { margin-top: 10px; }
+.ro-summary { font-size: 0.85rem; color: #8fa3b0; margin-bottom: 12px; padding: 6px 10px; background: rgba(0,0,0,0.3); border-radius: 3px; border-left: 3px solid var(--hobis-green); }
+.ro-table-section { margin-bottom: 16px; }
+.ro-table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-family: 'Orbitron', sans-serif; font-size: 0.95rem; color: var(--hobis-cyan); border-bottom: 1px dashed var(--hobis-border); padding-bottom: 4px; }
+.ro-copy-btn { font-size: 0.7rem !important; padding: 3px 10px !important; color: var(--hobis-green) !important; border-color: var(--hobis-green) !important; }
+.ro-copy-btn:hover { background: rgba(0,255,51,0.1) !important; }
+
+.ro-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.ro-table th { background: rgba(0,247,255,0.08); color: var(--hobis-cyan); padding: 6px 10px; text-align: center; border: 1px solid #2a3b47; font-weight: bold; font-size: 0.8rem; white-space: nowrap; }
+.ro-table td { padding: 6px 10px; border: 1px solid #2a3b47; }
+.ro-region-cell { color: #e0e0e0; font-weight: bold; white-space: nowrap; }
+.ro-num-cell { text-align: center; color: var(--hobis-green); }
+.ro-total-cell { font-weight: bold; }
+.ro-total-row { background: rgba(0,247,255,0.04); }
+.ro-grand-total { color: var(--hobis-cyan) !important; }
+
+/* Anomaly section */
+.ro-anomaly-section { margin-top: 16px; padding: 10px; background: rgba(255,51,0,0.05); border: 1px solid rgba(255,51,0,0.2); border-radius: 4px; }
+.ro-anomaly-header { font-family: 'Orbitron', sans-serif; font-size: 0.85rem; color: var(--hobis-alert); margin-bottom: 8px; border-bottom: 1px dashed rgba(255,51,0,0.3); padding-bottom: 4px; }
+.ro-anomaly-item { padding: 5px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; color: #a0c0c0; }
+.ro-anomaly-item:last-child { border-bottom: none; }
+.ro-anomaly-type { display: inline-block; background: rgba(255,51,0,0.15); color: var(--hobis-alert); padding: 1px 6px; border-radius: 3px; font-size: 0.7rem; font-weight: bold; margin-right: 6px; }
+.ro-anomaly-detail { font-size: 0.75rem; color: #5f7481; margin-top: 2px; padding-left: 10px; }
+
+/* Toast */
+.ro-toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,255,51,0.15); border: 1px solid var(--hobis-green); color: var(--hobis-green); padding: 8px 20px; border-radius: 4px; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; z-index: 10001; animation: fcFadeIn 0.15s ease; }
