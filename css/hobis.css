@@ -308,6 +308,40 @@ input:focus, select:focus { border-color: var(--hobis-cyan); }
 .fc-day-overlay-panel::after { content:""; position:absolute; bottom:-1px; right:-1px; width:10px; height:10px; border-bottom:2px solid var(--hobis-cyan); border-right:2px solid var(--hobis-cyan); }
 .fc-day-overlay-list { display: flex; flex-direction: column; gap: 3px; margin-top: 10px; }
 
+/* Week view */
+.fc-week-grid { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.fc-week-row { display: flex; gap: 0; border-bottom: 1px solid #1a2329; min-height: 48px; }
+.fc-week-row.fc-today { background: rgba(0,247,255,0.04); }
+.fc-week-date { flex: 0 0 80px; padding: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #1a2329; }
+.fc-week-day-name { font-size: 0.65rem; color: #5f7481; font-family: 'Orbitron', sans-serif; }
+.fc-week-day-num { font-size: 1rem; font-weight: bold; color: #8fa3b0; }
+.fc-week-day-num.fc-today-num { background: var(--hobis-cyan); color: #000; border-radius: 3px; padding: 0 5px; }
+.fc-week-date.fc-sun .fc-week-day-num { color: var(--hobis-alert); }
+.fc-week-date.fc-sat .fc-week-day-num { color: var(--hobis-cyan); }
+.fc-week-events { flex: 1; padding: 4px 8px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; align-content: flex-start; }
+.fc-week-ev { display: flex; align-items: center; gap: 6px; padding: 3px 8px; border-left: 3px solid var(--hobis-border); border-radius: 0 3px 3px 0; background: rgba(255,255,255,0.02); cursor: pointer; transition: 0.15s; font-size: 0.8rem; }
+.fc-week-ev:hover { background: rgba(0,247,255,0.05); }
+.fc-week-ev-time { color: var(--hobis-cyan); font-size: 0.7rem; font-weight: bold; }
+.fc-week-ev-title { color: #e0e0e0; }
+.fc-week-empty { padding: 3px 8px; color: #3c4c56; font-size: 0.75rem; cursor: pointer; border: 1px dashed #2a3b47; border-radius: 3px; transition: 0.15s; }
+.fc-week-empty:hover { border-color: var(--hobis-cyan); color: var(--hobis-cyan); }
+
+/* Day view */
+.fc-day-grid { display: flex; flex-direction: column; gap: 0; min-width: 0; }
+.fc-day-header { display: flex; align-items: center; gap: 12px; padding: 12px; border-bottom: 2px solid var(--hobis-border); margin-bottom: 10px; }
+.fc-day-header.fc-today { border-bottom-color: var(--hobis-cyan); }
+.fc-day-header-num { font-size: 1.8rem; font-weight: bold; color: var(--hobis-cyan); font-family: 'Orbitron', sans-serif; }
+.fc-day-header-label { font-size: 0.85rem; color: #8fa3b0; }
+.fc-day-header-count { margin-left: auto; font-size: 0.8rem; color: var(--hobis-green); }
+.fc-day-list { display: flex; flex-direction: column; gap: 6px; }
+.fc-day-ev { padding: 10px 12px; border-left: 4px solid var(--hobis-border); border-radius: 0 4px 4px 0; background: rgba(255,255,255,0.02); cursor: pointer; transition: 0.15s; }
+.fc-day-ev:hover { background: rgba(0,247,255,0.05); }
+.fc-day-ev-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.fc-day-ev-time { font-size: 0.8rem; color: var(--hobis-cyan); font-weight: bold; font-family: 'Orbitron', sans-serif; }
+.fc-day-ev-title { font-size: 0.95rem; color: #e0e0e0; font-weight: bold; }
+.fc-day-ev-desc { font-size: 0.8rem; color: #5f7481; margin-top: 4px; line-height: 1.4; }
+.fc-day-ev-loc { font-size: 0.75rem; color: #8fa3b0; margin-top: 4px; }
+
 /* ======== RI-ORDER MODULE ======== */
 
 .ro-settings { margin-bottom: 15px; }

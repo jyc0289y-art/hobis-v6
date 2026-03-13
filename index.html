@@ -131,10 +131,15 @@
                     </div>
                     <!-- CALENDAR VIEW -->
                     <div id="fcCalendarView" class="hidden">
-                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+                        <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
                             <button class="btn-outline" onclick="fcCalNav(-1)">&lt;</button>
                             <span id="fcCalTitle" style="font-family:'Orbitron',sans-serif; font-size:1rem; color:var(--hobis-cyan); min-width:80px; text-align:center;"></span>
                             <button class="btn-outline" onclick="fcCalNav(1)">&gt;</button>
+                            <div id="fcViewSwitch" class="mode-switch" style="margin:0; flex:0 0 auto;">
+                                <span class="mode-opt active" data-view="month" onclick="fcSetView('month',this)">MONTH</span>
+                                <span class="mode-opt" data-view="week" onclick="fcSetView('week',this)">WEEK</span>
+                                <span class="mode-opt" data-view="day" onclick="fcSetView('day',this)">DAY</span>
+                            </div>
                             <button class="btn-outline" onclick="fcCalToday()" style="margin-left:auto; color:var(--hobis-green); border-color:var(--hobis-green);">TODAY</button>
                         </div>
                         <div id="fcCalGrid" class="fc-cal-grid"></div>

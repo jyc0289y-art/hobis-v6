@@ -5,7 +5,8 @@ let fcData = [];
 let fcProjects = [];
 let fcProjectMap = {};
 let fcCurrentTab = 'calendar';
-let fcCalYear, fcCalMonth;
+let fcCalYear, fcCalMonth, fcCalDay;
+let fcCalView = 'month'; // 'month' | 'week' | 'day'
 let fcSelectedId = null;
 let fcLastResults = [];
 let fcShowPage = 1;
@@ -38,6 +39,7 @@ function evInitApp() {
     const now = new Date();
     fcCalYear = now.getFullYear();
     fcCalMonth = now.getMonth();
+    fcCalDay = now.getDate();
 
     // Show workspace
     const workspace = document.getElementById('fcWorkspace');
@@ -440,6 +442,14 @@ document.addEventListener('keydown', function(e) {
 function fcRenderCalendar() {
     const calTitle = document.getElementById('fcCalTitle');
     if (!calTitle) return;
+
+    // Dispatch to the active view
+    if (fcCalView === 'week') { fcRenderWeekView(); return; }
+    if (fcCalView === 'day') { fcRenderDayView(); return; }
+
+    // --- Month view ---
+    const grid = document.getElementById('fcCalGrid');
+    grid.className = 'fc-cal-grid';
     calTitle.textContent = fcCalYear + '.' + String(fcCalMonth+1).padStart(2,'0');
     const grid = document.getElementById('fcCalGrid');
 
@@ -510,9 +520,21 @@ function fcRenderCalendar() {
 }
 
 function fcCalNav(dir) {
-    fcCalMonth += dir;
-    if (fcCalMonth < 0) { fcCalMonth = 11; fcCalYear--; }
-    if (fcCalMonth > 11) { fcCalMonth = 0; fcCalYear++; }
+    if (fcCalView === 'day') {
+        const d = new Date(fcCalYear, fcCalMonth, fcCalDay + dir);
+        fcCalYear = d.getFullYear();
+        fcCalMonth = d.getMonth();
+        fcCalDay = d.getDate();
+    } else if (fcCalView === 'week') {
+        const d = new Date(fcCalYear, fcCalMonth, fcCalDay + dir * 7);
+        fcCalYear = d.getFullYear();
+        fcCalMonth = d.getMonth();
+        fcCalDay = d.getDate();
+    } else {
+        fcCalMonth += dir;
+        if (fcCalMonth < 0) { fcCalMonth = 11; fcCalYear--; }
+        if (fcCalMonth > 11) { fcCalMonth = 0; fcCalYear++; }
+    }
     fcRenderCalendar();
 }
 
@@ -520,7 +542,142 @@ function fcCalToday() {
     const now = new Date();
     fcCalYear = now.getFullYear();
     fcCalMonth = now.getMonth();
+    fcCalDay = now.getDate();
     fcRenderCalendar();
+}
+
+function fcSetView(view, btn) {
+    fcCalView = view;
+    document.querySelectorAll('#fcViewSwitch .mode-opt').forEach(b => {
+        b.classList.toggle('active', b.dataset.view === view);
+    });
+    fcRenderCalendar();
+}
+
+// --- Helper: get events for a specific date ---
+function _fcEventsForDate(dateStr) {
+    return fcData.filter(ev => {
+        if (!ev.start) return false;
+        const m = ev.start.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (!m) return false;
+        const startD = new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]));
+        let endStr = ev.end || ev.start;
+        const em = endStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        const endD = em ? new Date(parseInt(em[1]), parseInt(em[2])-1, parseInt(em[3])) : new Date(startD);
+        if (endD <= startD) endD.setDate(endD.getDate() + 1);
+        const target = new Date(dateStr + 'T00:00:00');
+        return target >= startD && target < endD;
+    });
+}
+
+function _fcDateStr(y, m, d) {
+    return y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+}
+
+// --- WEEK VIEW ---
+function fcRenderWeekView() {
+    const grid = document.getElementById('fcCalGrid');
+    const calTitle = document.getElementById('fcCalTitle');
+    // Find Monday of current week
+    const current = new Date(fcCalYear, fcCalMonth, fcCalDay);
+    const dow = current.getDay();
+    const mondayOffset = dow === 0 ? -6 : 1 - dow;
+    const monday = new Date(current);
+    monday.setDate(monday.getDate() + mondayOffset);
+
+    const sunday = new Date(monday);
+    sunday.setDate(sunday.getDate() + 6);
+    calTitle.textContent = (monday.getMonth()+1) + '.' + monday.getDate() + ' ~ ' + (sunday.getMonth()+1) + '.' + sunday.getDate();
+
+    const today = new Date();
+    const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+    const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+
+    let html = '';
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(monday);
+        d.setDate(d.getDate() + i);
+        const dateStr = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        const dayEvs = _fcEventsForDate(dateStr);
+        const isToday = dateStr === todayStr;
+        const isSun = d.getDay() === 0;
+        const isSat = d.getDay() === 6;
+
+        html += '<div class="fc-week-row' + (isToday ? ' fc-today' : '') + '">' +
+            '<div class="fc-week-date' + (isSun ? ' fc-sun' : '') + (isSat ? ' fc-sat' : '') + '">' +
+                '<span class="fc-week-day-name">' + dayNames[i] + '</span>' +
+                '<span class="fc-week-day-num' + (isToday ? ' fc-today-num' : '') + '">' + d.getDate() + '</span>' +
+            '</div>' +
+            '<div class="fc-week-events">';
+
+        if (dayEvs.length === 0) {
+            html += '<div class="fc-week-empty" onclick="efShowCreate(\'' + dateStr + '\')">+ 새 일정</div>';
+        } else {
+            dayEvs.forEach(ev => {
+                const pd = _evGetProjectDisplay(ev);
+                const timeStr = ev.start && ev.start.length > 10 ? ev.start.substring(11, 16) : '';
+                html += '<div class="fc-week-ev" style="border-left-color:' + pd.color + ';" onclick="fcShowDetail(\'' + ev.id + '\')">' +
+                    (timeStr ? '<span class="fc-week-ev-time">' + timeStr + '</span>' : '') +
+                    '<span class="fc-week-ev-title">' + fcEsc(ev.title) + '</span>' +
+                    (pd.name ? '<span class="fc-badge" style="background:' + pd.bg + ';color:' + pd.color + ';font-size:0.65rem;">' + fcEsc(pd.name) + '</span>' : '') +
+                '</div>';
+            });
+            html += '<div class="fc-week-empty" onclick="efShowCreate(\'' + dateStr + '\')">+</div>';
+        }
+        html += '</div></div>';
+    }
+
+    grid.className = 'fc-week-grid';
+    grid.innerHTML = html;
+}
+
+// --- DAY VIEW ---
+function fcRenderDayView() {
+    const grid = document.getElementById('fcCalGrid');
+    const calTitle = document.getElementById('fcCalTitle');
+    const current = new Date(fcCalYear, fcCalMonth, fcCalDay);
+    const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    calTitle.textContent = fcCalYear + '.' + String(fcCalMonth+1).padStart(2,'0') + '.' + String(fcCalDay).padStart(2,'0') + ' ' + dayNames[current.getDay()];
+
+    const dateStr = _fcDateStr(fcCalYear, fcCalMonth, fcCalDay);
+    const dayEvs = _fcEventsForDate(dateStr);
+
+    const today = new Date();
+    const todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+    const isToday = dateStr === todayStr;
+
+    let html = '<div class="fc-day-header' + (isToday ? ' fc-today' : '') + '">' +
+        '<span class="fc-day-header-num">' + fcCalDay + '</span>' +
+        '<span class="fc-day-header-label">' + dayNames[current.getDay()] + (isToday ? ' — TODAY' : '') + '</span>' +
+        '<span class="fc-day-header-count">' + dayEvs.length + ' EVENTS</span>' +
+    '</div>';
+
+    if (dayEvs.length === 0) {
+        html += '<div class="v6-empty-state" style="padding:40px 10px;">이 날짜에 일정이 없습니다.<br><span onclick="efShowCreate(\'' + dateStr + '\')" style="color:var(--hobis-cyan);cursor:pointer;text-decoration:underline;">새 일정 만들기</span></div>';
+    } else {
+        html += '<div class="fc-day-list">';
+        dayEvs.forEach(ev => {
+            const pd = _evGetProjectDisplay(ev);
+            const timeStr = ev.start && ev.start.length > 10 ? ev.start.substring(11, 16) : '';
+            const endTimeStr = ev.end && ev.end.length > 10 ? ev.end.substring(11, 16) : '';
+            const timeRange = timeStr ? (timeStr + (endTimeStr ? ' ~ ' + endTimeStr : '')) : '종일';
+
+            html += '<div class="fc-day-ev" style="border-left-color:' + pd.color + ';" onclick="fcShowDetail(\'' + ev.id + '\')">' +
+                '<div class="fc-day-ev-header">' +
+                    '<span class="fc-day-ev-time">' + timeRange + '</span>' +
+                    (pd.name ? '<span class="fc-badge" style="background:' + pd.bg + ';color:' + pd.color + ';">' + fcEsc(pd.name) + '</span>' : '') +
+                '</div>' +
+                '<div class="fc-day-ev-title">' + fcEsc(ev.title) + '</div>' +
+                (ev.description ? '<div class="fc-day-ev-desc">' + fcEsc(ev.description.substring(0, 120)) + (ev.description.length > 120 ? '...' : '') + '</div>' : '') +
+                (ev.location ? '<div class="fc-day-ev-loc">📍 ' + fcEsc(ev.location) + '</div>' : '') +
+            '</div>';
+        });
+        html += '<div class="fc-week-empty" onclick="efShowCreate(\'' + dateStr + '\')">+ 새 일정 추가</div>';
+        html += '</div>';
+    }
+
+    grid.className = 'fc-day-grid';
+    grid.innerHTML = html;
 }
 
 function fcShowDayEvents(day) {
