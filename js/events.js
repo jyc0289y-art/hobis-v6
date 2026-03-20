@@ -451,7 +451,6 @@ function fcRenderCalendar() {
     const grid = document.getElementById('fcCalGrid');
     grid.className = 'fc-cal-grid';
     calTitle.textContent = fcCalYear + '.' + String(fcCalMonth+1).padStart(2,'0');
-    const grid = document.getElementById('fcCalGrid');
 
     const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
     let html = days.map((d, i) => '<div class="fc-cal-dh' + (i===0?' fc-sun':'') + (i===6?' fc-sat':'') + '">' + d + '</div>').join('');
