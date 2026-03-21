@@ -1,10 +1,14 @@
 // --- HOBIS CORE MODULE ---
 // Global state, initialization, tab management, fullscreen
 
+const STATE_STORE_KEY = 'hobis_app_state';
+
 let currentMainTab = 'calendar', currentSubMode = 'decay_forward';
 let currentData = [], myChart = null, nucOptionsHTML = "", logHistory = [];
 let customerDB = [], customerHeaders = [], sourceInventory = [], selectedCustomer = null;
 let map = null, marker = null;
+let _cf252Initialized = false;
+let _cf252SavedState = null;
 
 function isIOS() {
     return ['iPad Simulator','iPhone Simulator','iPod Simulator','iPad','iPhone','iPod'].includes(navigator.platform) ||
@@ -18,10 +22,22 @@ function toggleFullScreen() {
 }
 
 window.onload = function() {
-    // V6: Initialize store (async — IndexedDB) then calendar
+    // GPS init (for log entries)
+    logInitGps();
+
+    // V6: Initialize store then restore state
     storeLoad().then(function() {
         evInitApp();
-        setMainTab('calendar');
+        return logLoadAll();
+    }).then(function() {
+        return storeGetKey(STATE_STORE_KEY);
+    }).then(function(state) {
+        const lastTab = (state && state.lastTab) || 'calendar';
+        const tabMap = { 'flowcal': 0, 'decay': 1, 'shield': 2, 'cf252': 3, 'logistics': 4, 'order': 5 };
+        const idx = tabMap[lastTab === 'calendar' ? 'flowcal' : lastTab];
+        const btn = document.querySelectorAll('.tab-btn')[idx !== undefined ? idx : 0];
+        if (state && state.cf252State) _cf252SavedState = state.cf252State;
+        setMainTab(lastTab, btn);
     });
 
     if (typeof GLOBAL_DB === 'undefined') {
@@ -51,17 +67,27 @@ function loadDB() {
     });
 }
 
+function _saveAppState() {
+    const state = {
+        lastTab: currentMainTab,
+        cf252State: typeof cf252GetState === 'function' ? cf252GetState() : null,
+    };
+    storeSetKey(STATE_STORE_KEY, state);
+}
+
 function setMainTab(t, btn) {
-    // Normalize: 'calendar' and 'flowcal' are the same tab
     if (t === 'calendar') t = 'flowcal';
     currentMainTab = t;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    // Use explicit btn param, or fallback to event.target for inline onclick calls
     const activeBtn = btn || (typeof event !== 'undefined' && event && event.target);
     if (activeBtn && activeBtn.classList) activeBtn.classList.add('active');
 
-    // Hide all mode-specific panels first
+    _saveAppState();
+
+    // Hide all panels
     document.getElementById('calcPanel').classList.add('hidden');
+    document.getElementById('cf252Panel').classList.add('hidden');
+    document.getElementById('cf252ReportPanel').classList.add('hidden');
     document.getElementById('logisticsLeftPanel').classList.add('hidden');
     document.getElementById('rightDetailPanel').classList.add('hidden');
     document.getElementById('rightReportPanel').classList.add('hidden');
@@ -88,6 +114,19 @@ function setMainTab(t, btn) {
         ws.classList.add('fc-mode');
         document.getElementById('orderPanel').classList.remove('hidden');
         roInit();
+    } else if (t === 'cf252') {
+        document.getElementById('logPanel').classList.remove('hidden');
+        document.getElementById('cf252Panel').classList.remove('hidden');
+        document.getElementById('cf252ReportPanel').classList.remove('hidden');
+        // Only render on first visit; DOM preserved across tab switches
+        if (!_cf252Initialized) {
+            cf252RenderInputs();
+            if (_cf252SavedState) {
+                cf252RestoreState(_cf252SavedState);
+                _cf252SavedState = null;
+            }
+            _cf252Initialized = true;
+        }
     } else if (t === 'logistics') {
         document.getElementById('logPanel').classList.remove('hidden');
         document.getElementById('logisticsLeftPanel').classList.remove('hidden');

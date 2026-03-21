@@ -10,6 +10,8 @@
 
     <title>HOBIS - Radiation Protection System</title>
 
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.sheetjs.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src https://fonts.gstatic.com; img-src 'self' https://*.tile.openstreetmap.org data:; connect-src 'self' https://nominatim.openstreetmap.org;">
+
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
@@ -31,6 +33,7 @@
         <button class="tab-btn active" onclick="setMainTab('calendar', this)">CALENDAR</button>
         <button class="tab-btn" onclick="setMainTab('decay', this)">DECAY</button>
         <button class="tab-btn" onclick="setMainTab('shield', this)">SHIELD</button>
+        <button class="tab-btn" onclick="setMainTab('cf252', this)">Cf-252</button>
         <button class="tab-btn" onclick="setMainTab('logistics', this)">LOGISTICS</button>
         <button class="tab-btn" onclick="setMainTab('order', this)">ORDER</button>
     </div>
@@ -59,6 +62,20 @@
                 </div>
                 <div id="inputArea"></div>
                 <button class="btn" onclick="calculate()">EXECUTE</button>
+            </div>
+
+            <!-- CF-252 PANEL -->
+            <div id="cf252Panel" class="panel hidden">
+                <div class="header" style="color:var(--hobis-warn); border-color:var(--hobis-warn);">Cf-252 DOSE ASSESSMENT</div>
+                <div style="font-size:0.8rem; color:#666; margin-bottom:10px;">
+                    REF: 호진산업기연(주) 방사선안전보고서 REV13 (6차 보완)
+                </div>
+                <div id="cf252ModeSwitch" class="mode-switch">
+                    <div class="mode-opt active" onclick="cf252SetMode('dose', this)">선량평가</div>
+                    <div class="mode-opt" onclick="cf252SetMode('activation', this)">방사화평가</div>
+                </div>
+                <div id="cf252InputArea"></div>
+                <button class="btn" style="background:var(--hobis-warn); color:#000; font-weight:bold;" onclick="cf252Calculate()">CALCULATE</button>
             </div>
 
             <!-- LOGISTICS PANEL -->
@@ -157,7 +174,7 @@
                             <label>File Import</label>
                             <div class="ro-file-area">
                                 <label for="roFileInput" class="btn-outline" style="cursor:pointer; color:var(--hobis-cyan); border-color:var(--hobis-cyan);">SELECT FILE (.xls / .htm)</label>
-                                <input type="file" id="roFileInput" accept=".xls,.xlsx,.csv,.htm,.html" style="display:none;" onchange="roHandleFile(event)">
+                                <input type="file" id="roFileInput" accept=".xls,.xlsx,.csv,.htm,.html" multiple style="display:none;" onchange="roHandleFile(event)">
                                 <span id="roFileStatus" style="font-size:0.8rem; color:#5f7481; margin-left:8px;">No file loaded</span>
                             </div>
                         </div>
@@ -208,6 +225,13 @@
 
         <!-- RIGHT COLUMN -->
         <div class="col-right">
+            <!-- CF-252 REPORT PANEL -->
+            <div id="cf252ReportPanel" class="panel hidden" style="border-color:var(--hobis-warn); flex-grow:1;">
+                <div class="header" style="color:var(--hobis-warn); border-color:var(--hobis-warn);">Cf-252 REPORT</div>
+                <div id="cf252ReportEmpty" class="placeholder-box">Ready for Cf-252 Calculation</div>
+                <div id="cf252ResultBox" class="hidden" style="overflow-y:auto; max-height:calc(100vh - 200px);"></div>
+            </div>
+
             <!-- FLOW CAL DETAIL (RIGHT) -->
             <div id="flowCalDetailPanel" class="panel hidden" style="flex-grow:1;">
                 <div class="header" style="color:white;">
@@ -276,6 +300,8 @@
 <script src="js/chart.js"></script>
 <script src="js/calc-ui.js"></script>
 <script src="js/calculator.js"></script>
+<script src="js/cf252.js"></script>
+<script src="js/cf252-ui.js"></script>
 <script src="js/logistics.js"></script>
 <script src="js/ri-order.js"></script>
 

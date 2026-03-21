@@ -141,6 +141,32 @@ function storeSave() {
     }
 }
 
+// --- Generic key-value helpers (for logs, state, etc.) ---
+function storeSetKey(key, value) {
+    if (_idb) {
+        const tx = _idb.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(value, key);
+    } else {
+        try { localStorage.setItem(key, JSON.stringify(value)); } catch(e) { console.error('storeSetKey error:', e); }
+    }
+}
+
+function storeGetKey(key) {
+    return _openIDB().then(function(db) {
+        return new Promise(function(resolve, reject) {
+            const tx = db.transaction(IDB_STORE, 'readonly');
+            const req = tx.objectStore(IDB_STORE).get(key);
+            req.onsuccess = function() { resolve(req.result || null); };
+            req.onerror = function() { reject(req.error); };
+        });
+    }).catch(function() {
+        try {
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : null;
+        } catch(e) { return null; }
+    });
+}
+
 function storeGetData() { return _storeData || _storeDefault(); }
 function storeGetProjects() { return storeGetData().projects; }
 function storeGetEvents() { return storeGetData().events; }

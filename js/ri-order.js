@@ -60,26 +60,134 @@ function roShowToast(msg) {
 // --- File Import ---
 
 function roHandleFile(e) {
-    var file = e.target.files[0];
-    if (!file) return;
-    roFileName = file.name;
-    document.getElementById('roFileStatus').textContent = file.name + ' loading...';
+    var files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    var allFiles = Array.from(files);
+    var htmFile = allFiles.find(function(f) { return /\.htm[l]?$/i.test(f.name); });
+    var csvFile = allFiles.find(function(f) { return /\.csv$/i.test(f.name); });
+    var xlsFile = allFiles.find(function(f) { return /\.xlsx?$/i.test(f.name); });
+    var primaryFile = htmFile || csvFile || xlsFile || allFiles[0];
+
+    roFileName = primaryFile.name;
+    document.getElementById('roFileStatus').textContent = primaryFile.name + ' loading...';
     document.getElementById('roFileStatus').style.color = 'var(--hobis-cyan)';
 
-    // Read as both ArrayBuffer (for SheetJS) and text (for HTML fallback)
+    var ext = primaryFile.name.split('.').pop().toLowerCase();
+
+    // .htm → HTML 테이블 파싱
+    if (ext === 'htm' || ext === 'html') {
+        roReadAsText(primaryFile, function(text) {
+            var json = roParseHTMLTable(text);
+            if (json.length === 0) throw new Error('HTM 파일에서 데이터를 찾을 수 없습니다.');
+            roNormalizeRows(json);
+        });
+        return;
+    }
+
+    // .csv → 텍스트 CSV 파싱 (EUC-KR 시도 → UTF-8 폴백)
+    if (ext === 'csv') {
+        roReadAsText(primaryFile, function(text) {
+            var json = roParseCSV(text);
+            if (json.length === 0) throw new Error('CSV 파일에서 데이터를 찾을 수 없습니다.');
+            roNormalizeRows(json);
+        }, 'EUC-KR');
+        return;
+    }
+
+    // .xls/.xlsx → ArrayBuffer (SheetJS + frameset 폴백)
     var readerBuf = new FileReader();
     readerBuf.onload = function(ev) {
         try {
-            roParseFile(ev.target.result);
+            roParseXLS(ev.target.result, allFiles);
         } catch (err) {
             document.getElementById('roFileStatus').textContent = 'Parse error: ' + err.message;
             document.getElementById('roFileStatus').style.color = 'var(--hobis-alert)';
         }
     };
-    readerBuf.readAsArrayBuffer(file);
+    readerBuf.readAsArrayBuffer(primaryFile);
 }
 
-function roParseFile(arrayBuf) {
+// 텍스트 읽기 헬퍼 (인코딩 지정 가능, 에러 핸들링 포함)
+function roReadAsText(file, callback, encoding) {
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+        try {
+            callback(ev.target.result);
+        } catch (err) {
+            // EUC-KR로 깨지면 UTF-8로 재시도
+            if (encoding && encoding !== 'UTF-8') {
+                var reader2 = new FileReader();
+                reader2.onload = function(ev2) {
+                    try {
+                        callback(ev2.target.result);
+                    } catch (err2) {
+                        document.getElementById('roFileStatus').textContent = 'Parse error: ' + err2.message;
+                        document.getElementById('roFileStatus').style.color = 'var(--hobis-alert)';
+                    }
+                };
+                reader2.readAsText(file, 'UTF-8');
+                return;
+            }
+            document.getElementById('roFileStatus').textContent = 'Parse error: ' + err.message;
+            document.getElementById('roFileStatus').style.color = 'var(--hobis-alert)';
+        }
+    };
+    reader.readAsText(file, encoding || 'UTF-8');
+}
+
+// CSV 파싱 (쉼표 구분, 따옴표 지원)
+function roParseCSV(text) {
+    var lines = text.split(/\r?\n/).filter(function(l) { return l.trim(); });
+    if (lines.length < 2) return [];
+
+    var headers = roSplitCSVLine(lines[0]);
+    var result = [];
+    for (var i = 1; i < lines.length; i++) {
+        var cols = roSplitCSVLine(lines[i]);
+        if (cols.length === 0) continue;
+        var obj = {};
+        headers.forEach(function(h, idx) {
+            obj[h.trim()] = idx < cols.length ? cols[idx].trim() : '';
+        });
+        if (obj[headers[0].trim()] || obj[headers[1] ? headers[1].trim() : '']) {
+            result.push(obj);
+        }
+    }
+    return result;
+}
+
+function roSplitCSVLine(line) {
+    var result = [];
+    var current = '';
+    var inQuote = false;
+    for (var i = 0; i < line.length; i++) {
+        var c = line[i];
+        if (inQuote) {
+            if (c === '"' && line[i + 1] === '"') {
+                current += '"';
+                i++;
+            } else if (c === '"') {
+                inQuote = false;
+            } else {
+                current += c;
+            }
+        } else {
+            if (c === '"') {
+                inQuote = true;
+            } else if (c === ',') {
+                result.push(current);
+                current = '';
+            } else {
+                current += c;
+            }
+        }
+    }
+    result.push(current);
+    return result;
+}
+
+function roParseXLS(arrayBuf, allFiles) {
     if (typeof XLSX === 'undefined') {
         throw new Error('SheetJS library not loaded');
     }
@@ -91,22 +199,55 @@ function roParseFile(arrayBuf) {
     var sheet = wb.Sheets[wb.SheetNames[0]];
     var json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
-    // If SheetJS returned 0 rows, it may be an HTML frameset .xls
-    if (json.length === 0) {
-        // Decode as text and try HTML table parsing
-        var text = new TextDecoder('utf-8').decode(data);
-        json = roParseHTMLTable(text);
-        if (json.length === 0) {
-            // Check if it's a frameset referencing a .files/ directory
-            var frameMatch = text.match(/src="([^"]*sheet\d+\.htm)"/);
-            var hint = frameMatch
-                ? '\n\n(.files/ 폴더 안의 ' + frameMatch[1].split('/').pop() + ' 파일을 선택하세요)'
-                : '';
-            throw new Error('데이터를 찾을 수 없습니다. .xls 프레임셋 파일인 경우 .files/ 폴더의 .htm 파일을 업로드하세요.' + hint);
-        }
+    // SheetJS 성공
+    if (json.length > 0) {
+        roNormalizeRows(json);
+        return;
     }
 
-    roNormalizeRows(json);
+    // SheetJS 0행 → 텍스트로 디코딩하여 HTML table 또는 frameset 시도
+    var text = new TextDecoder('utf-8').decode(data);
+
+    // HTML 테이블 직접 파싱
+    var htmlJson = roParseHTMLTable(text);
+    if (htmlJson.length > 0) {
+        roNormalizeRows(htmlJson);
+        return;
+    }
+
+    // CSV 형태일 수 있음 (확장자만 .xls)
+    var csvJson = roParseCSV(text);
+    if (csvJson.length > 0) {
+        roNormalizeRows(csvJson);
+        return;
+    }
+
+    // Frameset 감지: href로 .htm 경로 추출
+    var linkMatch = text.match(/href="([^"]*sheet\d+\.htm[l]?)"/i);
+    if (linkMatch) {
+        var htmName = linkMatch[1].split('/').pop();
+        // allFiles에서 매칭되는 .htm 찾기
+        var htmFile = (allFiles || []).find(function(f) {
+            return f.name.toLowerCase() === htmName.toLowerCase();
+        });
+        if (htmFile) {
+            var reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    var htmJson = roParseHTMLTable(ev.target.result);
+                    if (htmJson.length === 0) throw new Error('HTM 파일에서 데이터를 찾을 수 없습니다.');
+                    roNormalizeRows(htmJson);
+                } catch (err) {
+                    document.getElementById('roFileStatus').textContent = 'Parse error: ' + err.message;
+                    document.getElementById('roFileStatus').style.color = 'var(--hobis-alert)';
+                }
+            };
+            reader.readAsText(htmFile, 'utf-8');
+            return;
+        }
+        throw new Error('프레임셋 XLS 감지. .xls 파일과 함께 .files/ 폴더의 ' + htmName + ' 파일도 선택하세요. (Ctrl/Cmd 클릭으로 다중 선택)');
+    }
+    throw new Error('데이터를 찾을 수 없습니다. CSV, XLS, 또는 HTM 파일을 확인하세요.');
 }
 
 function roParseHTMLTable(data) {
@@ -343,7 +484,7 @@ function roBuildCo60(rows) {
 
 function roRenderTables(ir192, se75, co60, anomalies, totalFiltered) {
     var resultDiv = document.getElementById('roResults');
-    var specialLabel = roSpecialCompany || '(special company)';
+    var specialLabel = fcEsc(roSpecialCompany || '(special company)');
 
     // Summary
     var html = '<div class="ro-summary">Filtered: <span style="color:var(--hobis-green);">' +
@@ -369,8 +510,8 @@ function roRenderTables(ir192, se75, co60, anomalies, totalFiltered) {
         html += '<tr><td colspan="5" style="text-align:center; color:#5f7481;">No Co-60 orders</td></tr>';
     } else {
         co60.forEach(function(item) {
-            html += '<tr><td>' + item.isotope + '</td><td>' + item.model + '</td><td>' +
-                item.activity + '</td><td>' + item.quantity + '</td><td>' + item.company + '</td></tr>';
+            html += '<tr><td>' + fcEsc(item.isotope) + '</td><td>' + fcEsc(item.model) + '</td><td>' +
+                fcEsc(item.activity) + '</td><td>' + fcEsc(item.quantity) + '</td><td>' + fcEsc(item.company) + '</td></tr>';
         });
     }
     html += '</tbody></table></div>';
@@ -380,10 +521,10 @@ function roRenderTables(ir192, se75, co60, anomalies, totalFiltered) {
         html += '<div class="ro-anomaly-section">';
         html += '<div class="ro-anomaly-header">ANOMALY REPORT (' + anomalies.length + ')</div>';
         anomalies.forEach(function(a) {
-            var rowInfo = a.row.company ? (a.row.company + ' / ' + a.row.isotope + ' / ' +
-                a.row.activity + 'Ci x' + a.row.quantity) : '';
+            var rowInfo = a.row.company ? (fcEsc(a.row.company) + ' / ' + fcEsc(a.row.isotope) + ' / ' +
+                fcEsc(a.row.activity) + 'Ci x' + fcEsc(a.row.quantity)) : '';
             html += '<div class="ro-anomaly-item"><span class="ro-anomaly-type">' +
-                roAnomalyLabel(a.type) + '</span> ' + a.detail;
+                fcEsc(roAnomalyLabel(a.type)) + '</span> ' + fcEsc(a.detail);
             if (rowInfo) html += '<div class="ro-anomaly-detail">' + rowInfo + '</div>';
             html += '</div>';
         });
