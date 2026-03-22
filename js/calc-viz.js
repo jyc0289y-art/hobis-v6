@@ -26,17 +26,23 @@ function shieldGenerateSVG(sources, layers, options = {}) {
     };
 
     const src = sources[0] || { value: 0, distance_m: 1 };
-    const totalDistMM = src.distance_m * 1000; // m → mm for SVG scale
     const totalShieldMM = layers.reduce((s, l) => s + l.thickness_mm, 0);
-    const freePathMM = totalDistMM - totalShieldMM > 0 ? totalDistMM - totalShieldMM : totalDistMM * 0.3;
 
     const drawW = W - pad * 2;
     const drawH = H - 60;
     const centerY = 50 + drawH / 2;
-    const scale = drawW / (totalDistMM + totalDistMM * 0.1);
 
-    const srcX = pad + 15;
-    const shieldStartX = srcX + freePathMM * scale;
+    // 스케마틱 레이아웃: 선원(15%) — 차폐체(35~65%) — 평가점(85%)
+    const srcX = pad + drawW * 0.12;
+    const evalX = pad + drawW * 0.88;
+    const shieldZoneStart = pad + drawW * 0.35;
+    const shieldZoneEnd = pad + drawW * 0.65;
+    const shieldZoneW = shieldZoneEnd - shieldZoneStart;
+
+    // 각 차폐층 폭을 두께 비율로 배분 (최소 25px)
+    const layerWidths = layers.map(l => Math.max(l.thickness_mm, 1));
+    const totalLayerW = layerWidths.reduce((s, w) => s + w, 0);
+    const shieldStartX = shieldZoneStart;
 
     let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;font-family:'Share Tech Mono',monospace;">`;
     svg += `<rect width="${W}" height="${H}" fill="#0d1117" rx="4"/>`;
@@ -58,10 +64,10 @@ function shieldGenerateSVG(sources, layers, options = {}) {
         : (src.nuclide || 'Source');
     svg += `<text x="${srcX}" y="${centerY - 22}" text-anchor="middle" fill="#ff9900" font-size="${compact ? 9 : 11}">${srcLabel}</text>`;
 
-    // 차폐층
+    // 차폐층 (스케마틱: 비율 배분)
     let shieldX = shieldStartX;
     layers.forEach((layer, idx) => {
-        const layerW = Math.max(layer.thickness_mm * scale, 15);
+        const layerW = Math.max(shieldZoneW * (layerWidths[idx] / totalLayerW), 25);
         const layerH = drawH * 0.7;
         const y = centerY - layerH / 2;
         const mc = matColors[layer.material] || { fill: '#555', stroke: '#888', label: layer.material };
@@ -101,8 +107,7 @@ function shieldGenerateSVG(sources, layers, options = {}) {
         shieldX += layerW;
     });
 
-    // 평가점
-    const evalX = srcX + totalDistMM * scale;
+    // 평가점 (고정 위치)
     svg += `<g transform="translate(${evalX},${centerY})">`;
     svg += `<circle r="5" fill="none" stroke="#00ff33" stroke-width="2"/>`;
     svg += `<line x1="-4" y1="0" x2="4" y2="0" stroke="#00ff33" stroke-width="1.5"/>`;
