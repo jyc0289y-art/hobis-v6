@@ -36,7 +36,13 @@ function calculate() {
         // Spec Report
         let specHTML = "";
         srcs.forEach(s => specHTML += `<div class="spec-row"><span class="spec-key">${s.n.id}</span> <span class="spec-val">HL: ${s.n.hl}${s.n.unit}</span></div>`);
-        document.getElementById('specReportBox').innerHTML = `<div class="spec-report">${specHTML}</div>`;
+        let decayInteractiveHTML = '';
+        try {
+            if (typeof decayOpenOverlay === 'function') {
+                decayInteractiveHTML = `<div style="margin-top:10px;"><button class="btn-outline" style="color:var(--hobis-cyan); border-color:var(--hobis-cyan); font-size:0.75rem;" onclick="decayOpenOverlay()">⤢ INTERACTIVE VIEW</button></div>`;
+            }
+        } catch(e) { console.warn('Decay overlay error:', e); }
+        document.getElementById('specReportBox').innerHTML = `<div class="spec-report">${specHTML}</div>` + decayInteractiveHTML;
 
         const L = [], D = []; let range = days > 0 ? days * 1.2 : 365;
         for (let i = 0; i <= 100; i++) {
@@ -115,8 +121,24 @@ function calculate() {
         showResult(`${entry.resultVal} ${ou}`, ot);
         addToLog(entry);
 
-        // Spec Report Injection (PATCH 3)
-        document.getElementById('specReportBox').innerHTML = `<div class="spec-report">${reportSpecHTML}</div>`;
+        // Spec Report + SVG Diagram + Interactive button
+        let shieldDiagramHTML = '';
+        try {
+            if (typeof shieldGenerateSVG === 'function' && lays.length > 0) {
+                const svgSrcs = srcs.map(s => ({ nuclide: s.n.id, distance_m: dist, value: s.val }));
+                const svgLays = lays.map(l => ({ material: l.m, thickness_mm: l.t }));
+                shieldDiagramHTML = `
+                    <div id="shieldDiagramSection" style="margin-top:12px;">
+                        <div style="font-size:0.8rem; font-weight:bold; color:var(--hobis-cyan); margin-bottom:5px;">SHIELDING DIAGRAM
+                            <button class="btn-outline" style="margin-left:8px; font-size:0.7rem; padding:2px 8px; color:var(--hobis-cyan); border-color:var(--hobis-cyan);" onclick="shieldOpenOverlay()">⤢ EXPAND</button>
+                        </div>
+                        <div class="cf252-diagram-thumb" onclick="shieldOpenOverlay()" style="cursor:pointer;" title="클릭하여 인터랙티브 뷰 열기">
+                            ${shieldGenerateSVG(svgSrcs, svgLays, {width: 600, height: 200, compact: true})}
+                        </div>
+                    </div>`;
+            }
+        } catch(e) { console.warn('SVG diagram error:', e); }
+        document.getElementById('specReportBox').innerHTML = `<div class="spec-report">${reportSpecHTML}</div>` + shieldDiagramHTML;
 
         // Chart
         if (lays.length) {

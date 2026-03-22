@@ -283,7 +283,10 @@
 
             <!-- REPORT PANEL -->
             <div id="rightReportPanel" class="panel" style="border-color:var(--hobis-green); flex-grow:1;">
-                <div class="header">CALCULATION REPORT</div>
+                <div class="header">
+                    <span>CALCULATION REPORT</span>
+                    <button class="btn-outline" style="color:var(--hobis-green); border-color:var(--hobis-green);" onclick="calcExportPDF()">PDF</button>
+                </div>
                 <div id="reportEmpty" class="placeholder-box">Ready for Calculation</div>
                 <div id="resultBox" class="hidden">
                     <div class="res-val" id="resMain">-</div>
@@ -306,8 +309,9 @@
 <script src="js/utils.js"></script>
 <script src="js/log.js"></script>
 <script src="js/chart.js"></script>
-<script src="js/calc-ui.js"></script>
-<script src="js/calculator.js"></script>
+<script src="js/calc-ui.js?v=20260322d"></script>
+<script src="js/calculator.js?v=20260322d"></script>
+<script src="js/calc-viz.js?v=20260322d"></script>
 <script src="js/cf252.js?v=20260322b"></script>
 <script src="js/cf252-ui.js?v=20260322b"></script>
 <script src="js/logistics.js"></script>
