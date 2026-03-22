@@ -23,6 +23,7 @@ function shieldGenerateSVG(sources, layers, options = {}) {
         'Steel': { fill: '#5a6a7a', stroke: '#8a9aaa', label: 'Steel' },
         'Tungsten': { fill: '#7a7a7a', stroke: '#aaaaaa', label: 'W' },
         'DU': { fill: '#5a8a5a', stroke: '#7aba7a', label: 'DU' },
+        'LeadGlass': { fill: '#4a6a8a', stroke: '#7ab0d0', label: 'PbGlass' },
     };
 
     const src = sources[0] || { value: 0, distance_m: 1 };

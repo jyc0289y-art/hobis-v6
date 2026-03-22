@@ -71,7 +71,7 @@ function renderInputs() {
                 <div><label>Target Val</label><div class="input-group"><input type="number" id="targetVal"><select id="targetUnit">${getUnitOpts('dose')}</select></div></div>
             </div>
             <div class="grid-row">
-                <div><label>Material</label><select id="targetMat"><option value="Lead">Lead</option><option value="Concrete">Concrete</option><option value="Steel">Steel</option><option value="Tungsten">W</option><option value="DU">DU</option></select></div>
+                <div><label>Material</label><select id="targetMat"><option value="Lead">Lead</option><option value="LeadGlass">Lead Glass</option><option value="Concrete">Concrete</option><option value="Steel">Steel</option><option value="Tungsten">W</option><option value="DU">DU</option></select></div>
             </div>`;
         updateRowSpec(document.getElementById('nucSelect'));
     }
@@ -94,7 +94,7 @@ function addSourceRow() {
 function addLayerRow() {
     const div = document.createElement('div');
     div.className = 'list-item shield-layer';
-    div.innerHTML = `<div class="del-btn" onclick="this.parentElement.remove()">×</div><div class="grid-row" style="margin:0; gap:5px;"><div style="flex:1"><select class="mat-select"><option value="Lead">Lead</option><option value="Concrete">Concrete</option><option value="Steel">Steel</option><option value="Tungsten">W</option><option value="DU">DU</option></select></div><div style="flex:1"><input type="number" class="thk-input" placeholder="mm"></div></div>`;
+    div.innerHTML = `<div class="del-btn" onclick="this.parentElement.remove()">×</div><div class="grid-row" style="margin:0; gap:5px;"><div style="flex:1"><select class="mat-select"><option value="Lead">Lead</option><option value="LeadGlass">Lead Glass</option><option value="Concrete">Concrete</option><option value="Steel">Steel</option><option value="Tungsten">W</option><option value="DU">DU</option></select></div><div style="flex:1"><input type="number" class="thk-input" placeholder="mm"></div></div>`;
     document.getElementById('layerList').appendChild(div);
 }
 

@@ -20,61 +20,66 @@ const GLOBAL_DB = {
             id: "Ir-192", 
             hl: 74, unit: "d",    // Manual 1.3: 74 days
             gamma: 4.80,          // Manual Table 6: 0.48 R -> 4.8 mSv
-            hvl: { 
+            hvl: {
                 "Lead": 5.1,      // Manual Table 7: 0.200"
                 "Steel": 13.0,    // Manual Table 7: 0.512"
                 "Concrete": 43.2, // Manual Table 7: 1.700"
                 "Tungsten": 3.3,  // Manual Table 7: 0.130"
-                "DU": 1.3         // Manual Table 7: 0.050" 
-            } 
+                "DU": 1.3,        // Manual Table 7: 0.050"
+                "LeadGlass": 14.0 // 납유리(ρ≈3.3, Pb30%) 대표값
+            }
         },
-        { 
-            id: "Se-75", 
+        {
+            id: "Se-75",
             hl: 120, unit: "d",   // Manual 1.3
             gamma: 2.03,          // Manual Table 6: 0.203 R -> 2.03 mSv
-            hvl: { 
+            hvl: {
                 "Lead": 1.0,      // Manual Table 7: 0.039"
                 "Steel": 8.0,     // Manual Table 7: 0.315"
                 "Concrete": 30.0, // Manual Table 7: 1.180"
                 "Tungsten": 0.8,  // Manual Table 7: 0.032"
-                "DU": 0.6         // Not listed in Table 7 DU row, using calc/approx from density
-            } 
+                "DU": 0.6,        // Not listed in Table 7 DU row, using calc/approx from density
+                "LeadGlass": 2.8  // 납유리 대표값
+            }
         },
-        { 
-            id: "Yb-169", 
+        {
+            id: "Yb-169",
             hl: 32, unit: "d",    // Manual 1.3
             gamma: 1.25,          // Manual Table 6: 0.125 R -> 1.25 mSv
-            hvl: { 
+            hvl: {
                 "Lead": 0.8,      // Manual Table 7: 0.032"
                 "Steel": 4.3,     // Manual Table 7: 0.170"
                 "Concrete": 29.0, // Manual Table 7: 1.140"
                 "Tungsten": 0.25, // Approx (Not explicitly in W row for Yb)
-                "DU": 0.2         // Approx
-            } 
+                "DU": 0.2,        // Approx
+                "LeadGlass": 2.2  // 납유리 대표값
+            }
         },
-        { 
-            id: "Co-60", 
-            hl: 5.27, unit: "y", 
+        {
+            id: "Co-60",
+            hl: 5.27, unit: "y",
             gamma: 13.0,          // Manual Table 6: 1.30 R -> 13.0 mSv
-            hvl: { 
+            hvl: {
                 "Lead": 12.7,     // Manual Table 7: 0.500"
                 "Steel": 21.0,    // Manual Table 7: 0.827"
                 "Concrete": 61.0, // Manual Table 7: 2.400"
                 "Tungsten": 7.9,  // Manual Table 7: 0.310"
-                "DU": 6.8         // Manual Table 7: 0.270"
-            } 
+                "DU": 6.8,        // Manual Table 7: 0.270"
+                "LeadGlass": 33.0 // 납유리 대표값
+            }
         },
-        { 
-            id: "Cs-137", 
-            hl: 30.0, unit: "y", 
+        {
+            id: "Cs-137",
+            hl: 30.0, unit: "y",
             gamma: 3.20,          // Manual Table 6: 0.32 R -> 3.20 mSv
-            hvl: { 
+            hvl: {
                 "Lead": 6.4,      // Manual Table 7: 0.250"
                 "Steel": 22.9,    // Manual Table 7: 0.900"
                 "Concrete": 76.2, // Manual Table 7: 3.00"
                 "Tungsten": 5.7,  // Manual Table 7: 0.225"
-                "DU": 3.2         // Manual Table 7: 0.125"
-            } 
+                "DU": 3.2,        // Manual Table 7: 0.125"
+                "LeadGlass": 17.0 // 납유리 대표값
+            }
         }
     ],
 
