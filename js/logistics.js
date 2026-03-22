@@ -56,7 +56,7 @@ function renderCustomerList(list) {
     list.forEach(c => {
         const d = document.createElement('div');
         d.className = 'cust-item';
-        d.innerHTML = `<div class="cust-main" onclick="selectCust(this)"><div class="cust-name">${c._displayName}</div><div class="cust-addr">${c._displayAddr}</div></div><button class="item-add-btn" onclick="addToActiveRoute('${c._displayName}')">[+]</button>`;
+        d.innerHTML = `<div class="cust-main" onclick="selectCust(this)"><div class="cust-name">${fcEsc(c._displayName)}</div><div class="cust-addr">${fcEsc(c._displayAddr)}</div></div><button class="item-add-btn" onclick="addToActiveRoute('${fcEsc(c._displayName)}')">[+]</button>`;
         d.querySelector('.cust-main').data = c;
         el.appendChild(d);
     });
@@ -70,7 +70,7 @@ function selectCust(el) {
     const b = document.getElementById('infoTableBody');
     b.innerHTML = "";
     customerHeaders.forEach(h => {
-        if (selectedCustomer[h]) b.innerHTML += `<tr><td class="key">${h}</td><td class="val">${selectedCustomer[h]}</td></tr>`;
+        if (selectedCustomer[h]) b.innerHTML += `<tr><td class="key">${fcEsc(h)}</td><td class="val">${fcEsc(selectedCustomer[h])}</td></tr>`;
     });
     if (selectedCustomer._displayAddr) searchOSM(selectedCustomer._displayAddr);
 }
@@ -139,7 +139,7 @@ function renderInventory() {
     sourceInventory.forEach(i => {
         const d = document.createElement('div');
         d.className = 'inv-item';
-        d.innerHTML = `<div><span class="inv-badge">${i.nuc}</span><b>${i.actCi} Ci</b><span class="inv-meta">S/N: ${i.sn}</span><span class="inv-meta" style="font-size:0.7rem;color:#555;">${i.date} (${i.file})</span></div><button class="item-add-btn" onclick="addToActiveRouteCargo('${i.nuc} ${i.actCi}Ci (${i.sn})')">ADD</button>`;
+        d.innerHTML = `<div><span class="inv-badge">${fcEsc(i.nuc)}</span><b>${fcEsc(i.actCi)} Ci</b><span class="inv-meta">S/N: ${fcEsc(i.sn)}</span><span class="inv-meta" style="font-size:0.7rem;color:#555;">${fcEsc(i.date)} (${fcEsc(i.file)})</span></div><button class="item-add-btn" onclick="addToActiveRouteCargo('${fcEsc(i.nuc)} ${fcEsc(i.actCi)}Ci (${fcEsc(i.sn)})')">ADD</button>`;
         l.appendChild(d);
     });
 }

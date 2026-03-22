@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cf-252 RT룸 수조 핫셀 — 3D 구조 시각화</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0a0a0c; color:#c0d0d8; font-family:'Segoe UI',sans-serif; overflow:hidden; }
+#canvas3d { width:100vw; height:100vh; display:block; }
+#hud {
+    position:fixed; top:0; left:0; width:340px; padding:15px;
+    background:rgba(10,10,12,0.92); border-right:1px solid #2a3b47;
+    height:100vh; overflow-y:auto; z-index:10;
+    font-size:12px; line-height:1.6;
+}
+#hud h1 { font-size:16px; color:#00ff33; margin-bottom:5px; font-family:monospace; }
+#hud h2 { font-size:13px; color:#00f7ff; margin:12px 0 5px; border-bottom:1px solid #2a3b47; padding-bottom:3px; }
+#hud .sub { font-size:10px; color:#5f7481; margin-bottom:10px; }
+.legend { display:flex; align-items:center; gap:8px; margin:3px 0; font-size:11px; }
+.legend .swatch { width:14px; height:14px; border-radius:2px; flex-shrink:0; border:1px solid #2a3b47; }
+.spec { display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px dotted #1a2530; }
+.spec-k { color:#5f7481; } .spec-v { color:#00ff33; font-family:monospace; }
+.dose-table { width:100%; border-collapse:collapse; margin:5px 0; font-size:11px; }
+.dose-table th { background:#111418; color:#00f7ff; padding:3px 5px; text-align:left; border:1px solid #2a3b47; }
+.dose-table td { padding:3px 5px; border:1px solid #1a2530; }
+.pass { color:#00ff33; } .fail { color:#ff3300; }
+.ctrl { margin:8px 0; }
+.ctrl label { display:block; font-size:10px; color:#5f7481; margin-bottom:2px; }
+.ctrl select, .ctrl input[type=range] { width:100%; background:#111418; color:#c0d0d8; border:1px solid #2a3b47; padding:3px; font-size:11px; }
+.btn-row { display:flex; gap:5px; margin:8px 0; }
+.btn-toggle { flex:1; padding:5px; background:#111418; color:#5f7481; border:1px solid #2a3b47; cursor:pointer; text-align:center; font-size:10px; }
+.btn-toggle.active { color:#00ff33; border-color:#00ff33; }
+#info-bar {
+    position:fixed; bottom:0; left:0; right:0; padding:6px 15px;
+    background:rgba(10,10,12,0.9); border-top:1px solid #2a3b47;
+    font-size:10px; color:#5f7481; text-align:center; z-index:10;
+}
+</style>
+</head>
+<body>
+<div id="hud">
+    <h1>Cf-252 RT룸 수조 핫셀</h1>
+    <div class="sub">성능시험실(T) 내 아크릴+물+납 핫셀 구조 — 3D 시각화</div>
+
+    <h2>구조 범례</h2>
+    <div class="legend"><div class="swatch" style="background:rgba(0,150,255,0.4);"></div> 아크릴 수조 (물 충전)</div>
+    <div class="legend"><div class="swatch" style="background:rgba(100,100,110,0.8);"></div> 납판 (감마 차폐)</div>
+    <div class="legend"><div class="swatch" style="background:rgba(180,140,255,0.5);"></div> 납유리창 (시인성 확보)</div>
+    <div class="legend"><div class="swatch" style="background:rgba(200,200,200,0.9);"></div> SUS304 프레임 (구조보강)</div>
+    <div class="legend"><div class="swatch" style="background:rgba(0,255,50,0.8);"></div> Cf-252 선원 위치</div>
+    <div class="legend"><div class="swatch" style="background:rgba(255,100,0,0.6);"></div> 선량 평가점</div>
+
+    <h2>핫셀 치수</h2>
+    <div class="spec"><span class="spec-k">내부 공간</span><span class="spec-v">100 × 80 × 100 cm</span></div>
+    <div class="spec"><span class="spec-k">벽/천장 수조</span><span class="spec-v">물 30cm + 납 5cm</span></div>
+    <div class="spec"><span class="spec-k">창 (전면)</span><span class="spec-v" id="windowSpec">물 30cm + 납유리 5cm</span></div>
+    <div class="spec"><span class="spec-k">바닥</span><span class="spec-v">SUS304 베이스 + 납판</span></div>
+    <div class="spec"><span class="spec-k">외부 치수</span><span class="spec-v" id="outerDim">170 × 150 × 170 cm</span></div>
+    <div class="spec"><span class="spec-k">SUS304 프레임</span><span class="spec-v">50×50×5mm 앵글, 8주, 용접조립</span></div>
+    <div class="spec"><span class="spec-k">수조 무게 (물)</span><span class="spec-v" id="waterWeight">≈ 1,440 kg</span></div>
+    <div class="spec"><span class="spec-k">납판 무게</span><span class="spec-v" id="leadWeight">≈ 2,720 kg</span></div>
+
+    <h2>수용 용기</h2>
+    <div class="spec"><span class="spec-k">STC-100</span><span class="spec-v">Ø606 × H874mm, 192kg</span></div>
+    <div class="spec"><span class="spec-k">УКТIIB-313</span><span class="spec-v">Ø720 × H920mm, 460kg</span></div>
+
+    <h2>선량 평가 (관리구역 내부 ≤25 μSv/h)</h2>
+    <div class="ctrl">
+        <label>선원 방사능</label>
+        <select id="actSelect" onchange="updateDose()">
+            <option value="54">54 mCi (STC-100 × 1)</option>
+            <option value="2700" selected>2,700 mCi (2.7 Ci)</option>
+        </select>
+    </div>
+    <table class="dose-table">
+        <thead><tr><th>평가 위치</th><th>선량률</th><th>판정</th></tr></thead>
+        <tbody id="doseBody"></tbody>
+    </table>
+
+    <h2>뷰 설정</h2>
+    <div class="btn-row">
+        <div class="btn-toggle active" onclick="setView('perspective',this)">투시도</div>
+        <div class="btn-toggle" onclick="setView('front',this)">정면</div>
+        <div class="btn-toggle" onclick="setView('side',this)">측면</div>
+        <div class="btn-toggle" onclick="setView('top',this)">평면</div>
+    </div>
+    <div class="btn-row">
+        <div class="btn-toggle active" id="btnLabels" onclick="toggleLabels(this)">치수 표시</div>
+        <div class="btn-toggle active" id="btnDosePoints" onclick="toggleDosePoints(this)">평가점 표시</div>
+        <div class="btn-toggle" id="btnCutaway" onclick="toggleCutaway(this)">단면 보기</div>
+    </div>
+    <div class="ctrl">
+        <label>수조 투명도</label>
+        <input type="range" id="waterOpacity" min="0.05" max="0.6" step="0.05" value="0.3" oninput="updateOpacity()">
+    </div>
+</div>
+
+<canvas id="canvas3d"></canvas>
+<div id="info-bar">마우스 드래그: 회전 | 스크롤: 줌 | Shift+드래그: 이동 | HOBIS v6.0 Cf-252 Hot Cell Visualizer</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+// === CONSTANTS (from cf252.js) ===
+const HVL_G = { Pb:0.82, Water:10.0 };
+const HVL_N = { PE:1.85, Pb:3.45, Water:2.3 };
+const GAMMA_CONST = 23.1;
+const NEUTRON_CONST = 411.0;
+
+function doseCalc(act, dist, shields) {
+    let g = GAMMA_CONST * act / (dist*dist);
+    let n = NEUTRON_CONST * act / (dist*dist);
+    shields.forEach(s => {
+        const hvlG = HVL_G[s.mat] || 999;
+        const hvlN = HVL_N[s.mat] || 999;
+        g *= Math.pow(0.5, s.t / hvlG);
+        n *= Math.pow(0.5, s.t / hvlN);
+    });
+    return { g: g*1000, n: n*1000, total: (g+n)*1000 }; // μSv/h
+}
+
+// === HOT CELL DIMENSIONS (cm) ===
+const HC = {
+    innerW: 100, innerD: 80, innerH: 100,  // 내부 공간
+    waterT: 30,                              // 수조 물 두께
+    leadT: 5,                                // 납판 두께
+    leadGlassT: 5,                           // 납유리 (전면 창)
+    frameSize: 5,                            // SUS304 프레임 앵글 크기
+    baseH: 10,                               // 바닥 베이스 높이
+};
+HC.outerW = HC.innerW + (HC.waterT + HC.leadT) * 2;
+HC.outerD = HC.innerD + HC.waterT + HC.leadT + HC.waterT + HC.leadGlassT; // 후면납+물, 전면창+물
+HC.outerH = HC.innerH + HC.waterT + HC.leadT + HC.baseH; // 천장+바닥
+
+// === THREE.JS SETUP ===
+const canvas = document.getElementById('canvas3d');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a0c);
+scene.fog = new THREE.Fog(0x0a0a0c, 500, 1200);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
+camera.position.set(280, 220, 280);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.target.set(0, 50, 0);
+controls.update();
+
+// CSS2D for labels
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.top = '0';
+labelRenderer.domElement.style.pointerEvents = 'none';
+document.body.appendChild(labelRenderer.domElement);
+
+// === LIGHTING ===
+const ambientLight = new THREE.AmbientLight(0x334455, 0.8);
+scene.add(ambientLight);
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+dirLight.position.set(150, 300, 200);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(2048, 2048);
+scene.add(dirLight);
+const pointLight = new THREE.PointLight(0x00ff33, 0.5, 300);
+pointLight.position.set(0, 50, 0);
+scene.add(pointLight);
+
+// === MATERIALS ===
+const matWater = new THREE.MeshPhysicalMaterial({
+    color: 0x0096ff, transparent: true, opacity: 0.3,
+    roughness: 0.1, metalness: 0, transmission: 0.6,
+    side: THREE.DoubleSide,
+});
+const matLead = new THREE.MeshStandardMaterial({
+    color: 0x64646e, roughness: 0.8, metalness: 0.5, transparent: true, opacity: 0.85,
+});
+const matLeadGlass = new THREE.MeshPhysicalMaterial({
+    color: 0xb48cff, transparent: true, opacity: 0.4,
+    roughness: 0.05, metalness: 0.1, transmission: 0.7,
+    side: THREE.DoubleSide,
+});
+const matFrame = new THREE.MeshStandardMaterial({
+    color: 0xc8c8c8, roughness: 0.4, metalness: 0.8,
+});
+const matBase = new THREE.MeshStandardMaterial({
+    color: 0x888888, roughness: 0.6, metalness: 0.7,
+});
+const matSource = new THREE.MeshStandardMaterial({
+    color: 0x00ff33, emissive: 0x00ff33, emissiveIntensity: 2,
+});
+const matDosePoint = new THREE.MeshStandardMaterial({
+    color: 0xff6600, emissive: 0xff6600, emissiveIntensity: 1.5,
+});
+const matContainer = new THREE.MeshStandardMaterial({
+    color: 0xddaa44, roughness: 0.5, metalness: 0.6, transparent: true, opacity: 0.7,
+});
+const matFloor = new THREE.MeshStandardMaterial({
+    color: 0x222228, roughness: 0.9, metalness: 0.1,
+});
+
+// === GROUPS ===
+const hotcellGroup = new THREE.Group();
+const labelsGroup = new THREE.Group();
+const dosePointsGroup = new THREE.Group();
+scene.add(hotcellGroup);
+scene.add(labelsGroup);
+scene.add(dosePointsGroup);
+
+// === FLOOR ===
+const floorGeo = new THREE.PlaneGeometry(800, 800);
+const floor = new THREE.Mesh(floorGeo, matFloor);
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -1;
+floor.receiveShadow = true;
+scene.add(floor);
+
+// Grid
+const grid = new THREE.GridHelper(800, 40, 0x1a2530, 0x111820);
+grid.position.y = 0;
+scene.add(grid);
+
+// === BUILD HOT CELL ===
+const S = 1; // scale: 1 unit = 1 cm
+
+function buildHotCell() {
+    // Clear
+    while(hotcellGroup.children.length) hotcellGroup.remove(hotcellGroup.children[0]);
+
+    const iW = HC.innerW, iD = HC.innerD, iH = HC.innerH;
+    const wT = HC.waterT, lT = HC.leadT, lgT = HC.leadGlassT;
+    const bH = HC.baseH;
+
+    // Origin at center-bottom of hot cell
+
+    // === SUS304 BASE PLATE ===
+    const baseGeo = new THREE.BoxGeometry((iW + (wT+lT)*2 + 10)*S, bH*S, (iD + wT+lT + wT+lgT + 10)*S);
+    const base = new THREE.Mesh(baseGeo, matBase);
+    base.position.y = bH/2*S;
+    base.castShadow = true;
+    base.receiveShadow = true;
+    hotcellGroup.add(base);
+
+    const yBase = bH * S;
+
+    // === LEAD BOTTOM (on base) ===
+    const leadBottomGeo = new THREE.BoxGeometry(iW*S, lT*S, iD*S);
+    const leadBottom = new THREE.Mesh(leadBottomGeo, matLead);
+    leadBottom.position.set(0, yBase + lT/2*S, 0);
+    hotcellGroup.add(leadBottom);
+
+    const yFloor = yBase + lT*S; // internal floor level
+
+    // === WATER WALLS (4 sides + ceiling) ===
+    // Back wall (water + lead)
+    const backWaterGeo = new THREE.BoxGeometry(iW*S, iH*S, wT*S);
+    const backWater = new THREE.Mesh(backWaterGeo, matWater);
+    backWater.position.set(0, yFloor + iH/2*S, -(iD/2 + wT/2)*S);
+    hotcellGroup.add(backWater);
+
+    const backLeadGeo = new THREE.BoxGeometry((iW + wT*2)*S, iH*S, lT*S);
+    const backLead = new THREE.Mesh(backLeadGeo, matLead);
+    backLead.position.set(0, yFloor + iH/2*S, -(iD/2 + wT + lT/2)*S);
+    backLead.castShadow = true;
+    hotcellGroup.add(backLead);
+
+    // Left wall (water + lead)
+    const leftWaterGeo = new THREE.BoxGeometry(wT*S, iH*S, iD*S);
+    const leftWater = new THREE.Mesh(leftWaterGeo, matWater);
+    leftWater.position.set(-(iW/2 + wT/2)*S, yFloor + iH/2*S, 0);
+    hotcellGroup.add(leftWater);
+
+    const leftLeadGeo = new THREE.BoxGeometry(lT*S, iH*S, (iD + wT*2)*S);
+    const leftLead = new THREE.Mesh(leftLeadGeo, matLead);
+    leftLead.position.set(-(iW/2 + wT + lT/2)*S, yFloor + iH/2*S, 0);
+    leftLead.castShadow = true;
+    hotcellGroup.add(leftLead);
+
+    // Right wall (water + lead)
+    const rightWater = new THREE.Mesh(leftWaterGeo, matWater);
+    rightWater.position.set((iW/2 + wT/2)*S, yFloor + iH/2*S, 0);
+    hotcellGroup.add(rightWater);
+
+    const rightLead = new THREE.Mesh(leftLeadGeo, matLead);
+    rightLead.position.set((iW/2 + wT + lT/2)*S, yFloor + iH/2*S, 0);
+    rightLead.castShadow = true;
+    hotcellGroup.add(rightLead);
+
+    // Front wall = WINDOW (water + lead glass, NO lead)
+    const frontWaterGeo = new THREE.BoxGeometry(iW*S, iH*S, wT*S);
+    const frontWater = new THREE.Mesh(frontWaterGeo, matWater);
+    frontWater.position.set(0, yFloor + iH/2*S, (iD/2 + wT/2)*S);
+    hotcellGroup.add(frontWater);
+
+    // Lead glass on outside of front water
+    const frontLeadGlassGeo = new THREE.BoxGeometry(iW*S, (iH*0.6)*S, lgT*S); // 60% height window
+    const frontLeadGlass = new THREE.Mesh(frontLeadGlassGeo, matLeadGlass);
+    frontLeadGlass.position.set(0, yFloor + (iH*0.5)*S, (iD/2 + wT + lgT/2)*S);
+    hotcellGroup.add(frontLeadGlass);
+
+    // Opaque panel above/below lead glass on front
+    const panelAboveGeo = new THREE.BoxGeometry(iW*S, (iH*0.2)*S, lgT*S);
+    const panelAbove = new THREE.Mesh(panelAboveGeo, matLead);
+    panelAbove.position.set(0, yFloor + (iH*0.9)*S, (iD/2 + wT + lgT/2)*S);
+    hotcellGroup.add(panelAbove);
+    const panelBelow = new THREE.Mesh(panelAboveGeo, matLead);
+    panelBelow.position.set(0, yFloor + (iH*0.1)*S, (iD/2 + wT + lgT/2)*S);
+    hotcellGroup.add(panelBelow);
+
+    // === CEILING (water + lead) ===
+    const ceilWaterGeo = new THREE.BoxGeometry(iW*S, wT*S, iD*S);
+    const ceilWater = new THREE.Mesh(ceilWaterGeo, matWater);
+    ceilWater.position.set(0, yFloor + iH*S + wT/2*S, 0);
+    hotcellGroup.add(ceilWater);
+
+    const ceilLeadGeo = new THREE.BoxGeometry((iW + wT*2 + lT*2)*S, lT*S, (iD + wT + lT + wT + lgT)*S);
+    const ceilLead = new THREE.Mesh(ceilLeadGeo, matLead);
+    ceilLead.position.set(0, yFloor + iH*S + wT*S + lT/2*S, 0);
+    ceilLead.castShadow = true;
+    hotcellGroup.add(ceilLead);
+
+    // === SUS304 STRUCTURAL FRAME ===
+    const fS = HC.frameSize;
+    const frameGeo = new THREE.BoxGeometry(fS*S, (iH + wT + lT + bH)*S, fS*S);
+
+    // 8 vertical columns at corners
+    const corners = [
+        [-(iW/2 + wT + lT + fS/2), (iD/2 + wT + lgT + fS/2)],
+        [(iW/2 + wT + lT + fS/2), (iD/2 + wT + lgT + fS/2)],
+        [-(iW/2 + wT + lT + fS/2), -(iD/2 + wT + lT + fS/2)],
+        [(iW/2 + wT + lT + fS/2), -(iD/2 + wT + lT + fS/2)],
+    ];
+    corners.forEach(([x, z]) => {
+        const col = new THREE.Mesh(frameGeo, matFrame);
+        col.position.set(x*S, (iH + wT + lT + bH)/2*S, z*S);
+        col.castShadow = true;
+        hotcellGroup.add(col);
+    });
+
+    // Horizontal frame bars (top & mid & bottom)
+    const barWGeo = new THREE.BoxGeometry((iW + (wT+lT)*2 + fS*2)*S, fS*S, fS*S);
+    const barDGeo = new THREE.BoxGeometry(fS*S, fS*S, (iD + wT+lT + wT+lgT + fS*2)*S);
+    [bH, bH + iH/2, bH + iH + wT + lT].forEach(yy => {
+        // Front-back bars
+        [-(iD/2 + wT + lT + fS/2), (iD/2 + wT + lgT + fS/2)].forEach(z => {
+            const bar = new THREE.Mesh(barWGeo, matFrame);
+            bar.position.set(0, yy*S, z*S);
+            hotcellGroup.add(bar);
+        });
+        // Left-right bars
+        [-(iW/2 + wT + lT + fS/2), (iW/2 + wT + lT + fS/2)].forEach(x => {
+            const bar = new THREE.Mesh(barDGeo, matFrame);
+            bar.position.set(x*S, yy*S, 0);
+            hotcellGroup.add(bar);
+        });
+    });
+
+    // === SOURCE INDICATOR ===
+    const srcGeo = new THREE.SphereGeometry(4*S, 16, 16);
+    const src = new THREE.Mesh(srcGeo, matSource);
+    src.position.set(0, yFloor + 40*S, 0); // center of hot cell
+    hotcellGroup.add(src);
+
+    // Source glow
+    const glowGeo = new THREE.SphereGeometry(8*S, 16, 16);
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0x00ff33, transparent: true, opacity: 0.15 });
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    glow.position.copy(src.position);
+    hotcellGroup.add(glow);
+
+    // === CONTAINER (STC-100 silhouette) ===
+    const contGeo = new THREE.CylinderGeometry(30.3*S, 30.3*S, 87.4*S, 16);
+    const cont = new THREE.Mesh(contGeo, matContainer);
+    cont.position.set(0, yFloor + 87.4/2*S, 0);
+    hotcellGroup.add(cont);
+
+    // === DOSE EVALUATION POINTS ===
+    buildDosePoints(yFloor);
+
+    // === LABELS ===
+    buildLabels(yFloor);
+}
+
+function buildDosePoints(yFloor) {
+    while(dosePointsGroup.children.length) dosePointsGroup.remove(dosePointsGroup.children[0]);
+
+    const dpGeo = new THREE.SphereGeometry(3*S, 8, 8);
+    const iW = HC.innerW, iD = HC.innerD, iH = HC.innerH;
+    const wT = HC.waterT, lT = HC.leadT, lgT = HC.leadGlassT;
+
+    const points = [
+        { name: '벽 외부', pos: [-(iW/2+wT+lT+30), iH/2, 0], id: 'wall' },
+        { name: '창 전면', pos: [0, iH/2, iD/2+wT+lgT+30], id: 'window' },
+        { name: '천장 상부', pos: [0, iH+wT+lT+30, 0], id: 'ceil' },
+    ];
+
+    points.forEach(p => {
+        const dp = new THREE.Mesh(dpGeo, matDosePoint);
+        dp.position.set(p.pos[0]*S, yFloor + p.pos[1]*S, p.pos[2]*S);
+        dosePointsGroup.add(dp);
+
+        // Dashed line from source to point
+        const srcPos = new THREE.Vector3(0, yFloor + 40*S, 0);
+        const lineGeo = new THREE.BufferGeometry().setFromPoints([srcPos, dp.position]);
+        const lineMat = new THREE.LineDashedMaterial({ color: 0xff6600, dashSize: 5, gapSize: 3, transparent: true, opacity: 0.5 });
+        const line = new THREE.Line(lineGeo, lineMat);
+        line.computeLineDistances();
+        dosePointsGroup.add(line);
+
+        // Label
+        const lbl = makeLabel(p.name, '#ff6600');
+        lbl.position.copy(dp.position);
+        lbl.position.y += 8*S;
+        dosePointsGroup.add(lbl);
+    });
+}
+
+function buildLabels(yFloor) {
+    while(labelsGroup.children.length) labelsGroup.remove(labelsGroup.children[0]);
+
+    const iW = HC.innerW, iD = HC.innerD, iH = HC.innerH;
+    const wT = HC.waterT, lT = HC.leadT, lgT = HC.leadGlassT;
+
+    // Dimension labels
+    const dims = [
+        { text: `내부 ${iW}cm`, pos: [0, yFloor + iH*S + 50*S, 0], color: '#00f7ff' },
+        { text: `물 ${wT}cm`, pos: [-(iW/2 + wT/2)*S, yFloor + iH*S + 35*S, 0], color: '#0096ff' },
+        { text: `납 ${lT}cm`, pos: [-(iW/2 + wT + lT/2)*S, yFloor + iH*S + 35*S, 0], color: '#999' },
+        { text: `납유리 ${lgT}cm`, pos: [0, yFloor + iH*0.5*S, (iD/2 + wT + lgT + 8)*S], color: '#b48cff' },
+        { text: 'SUS304 프레임', pos: [(iW/2 + wT + lT + 15)*S, yFloor + iH*S + 20*S, 0], color: '#ccc' },
+        { text: 'STC-100 용기', pos: [35*S, yFloor + 90*S, 0], color: '#ddaa44' },
+    ];
+
+    dims.forEach(d => {
+        const lbl = makeLabel(d.text, d.color);
+        lbl.position.set(d.pos[0], d.pos[1], d.pos[2]);
+        labelsGroup.add(lbl);
+    });
+}
+
+function makeLabel(text, color) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    div.style.cssText = `color:${color};font-size:11px;font-family:monospace;background:rgba(10,10,12,0.7);padding:2px 5px;border-radius:2px;white-space:nowrap;`;
+    return new CSS2DObject(div);
+}
+
+// === DOSE CALCULATION ===
+function updateDose() {
+    const act = parseInt(document.getElementById('actSelect').value);
+    const iW = HC.innerW, iD = HC.innerD, iH = HC.innerH;
+    const wT = HC.waterT, lT = HC.leadT, lgT = HC.leadGlassT;
+
+    const scenarios = [
+        { name: '벽 (물+납)', dist: iW/2 + wT + lT + 30, shields: [{mat:'Water',t:wT},{mat:'Pb',t:lT}] },
+        { name: '창 (물+납유리)', dist: iD/2 + wT + lgT + 30, shields: [{mat:'Water',t:wT},{mat:'Pb',t:lgT}] },
+        { name: '천장 (물+납)', dist: 20 + wT + lT + 30, shields: [{mat:'Water',t:wT},{mat:'Pb',t:lT}] },
+    ];
+
+    const tbody = document.getElementById('doseBody');
+    tbody.innerHTML = '';
+    scenarios.forEach(s => {
+        const r = doseCalc(act, s.dist, s.shields);
+        const cls = r.total <= 25 ? 'pass' : 'fail';
+        const icon = r.total <= 25 ? '✓' : '✗';
+        tbody.innerHTML += `<tr><td>${s.name}</td><td>${r.total.toFixed(2)} μSv/h</td><td class="${cls}">${icon} ${r.total <= 25 ? '≤25' : '>25'}</td></tr>`;
+    });
+
+    // Update window spec
+    document.getElementById('windowSpec').textContent = `물 ${wT}cm + 납유리 ${lgT}cm`;
+
+    // Update dimensions
+    const oW = iW + (wT+lT)*2;
+    const oD = iD + wT+lT + wT+lgT;
+    const oH = iH + wT+lT + HC.baseH;
+    document.getElementById('outerDim').textContent = `${oW} × ${oD} × ${oH} cm`;
+
+    // Water weight estimate: total water volume in liters ≈ kg
+    const wallVol = 2*(iW*iH*wT) + 2*(iD*iH*wT) + (iW*iD*wT); // walls + ceiling (approximate)
+    const waterKg = Math.round(wallVol / 1000);
+    document.getElementById('waterWeight').textContent = `≈ ${waterKg.toLocaleString()} kg`;
+
+    // Lead weight: density 11.34 g/cm³
+    const leadVol = 2*(oW*iH*lT) + 2*((iD+wT*2)*iH*lT) + (oW*oD*lT) + (iW*iD*lT); // walls+ceiling+bottom
+    const leadKg = Math.round(leadVol * 11.34 / 1000);
+    document.getElementById('leadWeight').textContent = `≈ ${leadKg.toLocaleString()} kg`;
+}
+
+// === VIEW CONTROLS ===
+function setView(view, el) {
+    document.querySelectorAll('.btn-row .btn-toggle').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    const t = controls.target;
+    switch(view) {
+        case 'front': camera.position.set(0, 80, 350); break;
+        case 'side': camera.position.set(-350, 80, 0); break;
+        case 'top': camera.position.set(0, 400, 1); break;
+        default: camera.position.set(280, 220, 280);
+    }
+    controls.update();
+}
+window.setView = setView;
+
+window.toggleLabels = (el) => {
+    el.classList.toggle('active');
+    labelsGroup.visible = el.classList.contains('active');
+};
+window.toggleDosePoints = (el) => {
+    el.classList.toggle('active');
+    dosePointsGroup.visible = el.classList.contains('active');
+};
+
+let cutawayMode = false;
+window.toggleCutaway = (el) => {
+    cutawayMode = !cutawayMode;
+    el.classList.toggle('active');
+    // Clip plane to cut away front half
+    if (cutawayMode) {
+        renderer.clippingPlanes = [new THREE.Plane(new THREE.Vector3(0, 0, -1), 0)];
+        renderer.localClippingEnabled = true;
+    } else {
+        renderer.clippingPlanes = [];
+    }
+};
+
+window.updateOpacity = () => {
+    matWater.opacity = parseFloat(document.getElementById('waterOpacity').value);
+};
+
+window.updateDose = updateDose;
+
+// === ANIMATION ===
+const clock = new THREE.Clock();
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+
+    // Pulse source glow
+    const t = clock.getElapsedTime();
+    const glows = hotcellGroup.children.filter(c => c.material && c.material.opacity === 0.15);
+    glows.forEach(g => {
+        g.scale.setScalar(1 + Math.sin(t * 2) * 0.15);
+        g.material.opacity = 0.1 + Math.sin(t * 3) * 0.05;
+    });
+
+    renderer.render(scene, camera);
+    labelRenderer.render(scene, camera);
+}
+
+// === INIT ===
+buildHotCell();
+updateDose();
+animate();
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>

@@ -3,8 +3,38 @@
 // Key: 'hobis_logs' in IDB store
 
 const LOG_STORE_KEY = 'hobis_logs';
+const LOG_GPS_KEY = 'hobis_gps_enabled';
 let _logGpsCache = null;
 let _logGpsWatchId = null;
+let _logGpsEnabled = false;
+
+// --- GPS Toggle ---
+function logGpsToggle(forceState) {
+    _logGpsEnabled = forceState !== undefined ? forceState : !_logGpsEnabled;
+    storeSetKey(LOG_GPS_KEY, _logGpsEnabled);
+    if (_logGpsEnabled) {
+        logInitGps();
+    } else {
+        logStopGps();
+    }
+    logGpsUpdateUI();
+}
+
+function logGpsUpdateUI() {
+    const btn = document.getElementById('gpsToggleBtn');
+    if (!btn) return;
+    btn.textContent = _logGpsEnabled ? 'GPS ON' : 'GPS OFF';
+    btn.style.color = _logGpsEnabled ? 'var(--hobis-green)' : 'var(--hobis-warn)';
+    btn.style.borderColor = _logGpsEnabled ? 'var(--hobis-green)' : 'var(--hobis-warn)';
+}
+
+function logGpsRestore() {
+    storeGetKey(LOG_GPS_KEY).then(function(val) {
+        _logGpsEnabled = val === true;
+        if (_logGpsEnabled) logInitGps();
+        logGpsUpdateUI();
+    });
+}
 
 // --- GPS ---
 function logInitGps() {
@@ -21,7 +51,16 @@ function logInitGps() {
     );
 }
 
+function logStopGps() {
+    if (_logGpsWatchId !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(_logGpsWatchId);
+        _logGpsWatchId = null;
+    }
+    _logGpsCache = null;
+}
+
 function logGetGps() {
+    if (!_logGpsEnabled) return null;
     return _logGpsCache ? { ...(_logGpsCache) } : null;
 }
 

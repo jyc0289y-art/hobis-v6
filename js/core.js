@@ -22,8 +22,8 @@ function toggleFullScreen() {
 }
 
 window.onload = function() {
-    // GPS init (for log entries)
-    logInitGps();
+    // GPS: restore saved toggle state (default OFF for privacy)
+    logGpsRestore();
 
     // V6: Initialize store then restore state
     storeLoad().then(function() {

@@ -430,3 +430,49 @@ input:focus, select:focus { border-color: var(--hobis-cyan); }
 .log-gps { color: var(--hobis-cyan); font-size: 0.75rem; margin-left: 6px; cursor: default; }
 .log-gps-none { color: #555; }
 .cf252-preset-ref { font-size: 0.75rem; color: var(--hobis-cyan); padding: 4px 8px; margin-bottom: 8px; border-left: 2px solid var(--hobis-cyan); background: rgba(0,247,255,0.05); }
+
+/* Cf-252 Diagram Section */
+.cf252-diagram-section { margin-bottom: 12px; }
+.cf252-diagram-thumb { cursor: pointer; border: 1px solid var(--hobis-border); border-radius: 4px; padding: 4px; background: #0d1117; transition: border-color 0.2s; }
+.cf252-diagram-thumb:hover { border-color: var(--hobis-cyan); }
+.cf252-expand-btn { font-size: 0.7rem !important; padding: 2px 8px !important; float: right; }
+
+/* Cf-252 Overlay Modal */
+.cf252-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 10000; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease; }
+.cf252-ov-visible { opacity: 1; }
+.cf252-ov-content { background: var(--hobis-panel); border: 1px solid var(--hobis-warn); border-radius: 8px; width: 95vw; max-width: 1100px; max-height: 95vh; overflow-y: auto; box-shadow: 0 0 40px rgba(255,204,0,0.15); }
+.cf252-ov-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; border-bottom: 1px solid var(--hobis-border); }
+.cf252-ov-close { background: none; border: 1px solid var(--hobis-alert); color: var(--hobis-alert); font-size: 1.2rem; width: 32px; height: 32px; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+.cf252-ov-close:hover { background: rgba(255,51,0,0.2); }
+.cf252-ov-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.cf252-ov-diagram { border: 1px solid var(--hobis-border); border-radius: 4px; background: #0d1117; padding: 8px; }
+
+/* Overlay Sliders */
+.cf252-ov-controls { display: flex; flex-wrap: wrap; gap: 12px; }
+.cf252-ov-sliders { flex: 1; min-width: 280px; display: flex; flex-direction: column; gap: 10px; }
+.cf252-ov-slider-group { background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.06); }
+.cf252-ov-slider-group label { display: block; font-size: 0.8rem; color: #8fa3b0; margin-bottom: 4px; }
+.cf252-ov-slider-group label span { color: var(--hobis-warn); font-family: 'Orbitron', sans-serif; font-size: 0.9rem; }
+.cf252-ov-slider-group input[type="range"] { width: 100%; accent-color: var(--hobis-cyan); height: 6px; cursor: pointer; }
+.cf252-ov-add-shield { display: flex; gap: 8px; align-items: center; }
+.cf252-ov-add-shield select { flex: 1; background: var(--hobis-bg); color: #ccc; border: 1px solid var(--hobis-border); padding: 4px 8px; border-radius: 3px; }
+
+/* Overlay Result Card */
+.cf252-ov-result { flex: 1; min-width: 280px; }
+.cf252-ov-result-card { padding: 12px; border-radius: 6px; }
+.cf252-ov-result-card.cf252-pass { background: rgba(0,255,51,0.08); border: 1px solid rgba(0,255,51,0.3); }
+.cf252-ov-result-card.cf252-fail { background: rgba(255,51,0,0.08); border: 1px solid rgba(255,51,0,0.3); }
+.cf252-ov-result-verdict { font-family: 'Orbitron', sans-serif; font-size: 1rem; margin-bottom: 10px; }
+.cf252-pass .cf252-ov-result-verdict { color: var(--hobis-green); }
+.cf252-fail .cf252-ov-result-verdict { color: var(--hobis-alert); }
+.cf252-ov-result-grid { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.cf252-ov-result-grid > div { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.cf252-ov-result-total { border-top: 1px solid var(--hobis-warn) !important; padding-top: 6px !important; margin-top: 2px; }
+.cf252-ov-rlabel { color: #8fa3b0; font-size: 0.85rem; }
+.cf252-ov-rval { color: var(--hobis-warn); font-family: 'Orbitron', sans-serif; font-size: 0.9rem; }
+.cf252-ov-result-total .cf252-ov-rval { color: #fff; font-size: 1rem; }
+
+/* Progress Bar */
+.cf252-ov-result-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 8px 0 4px; position: relative; overflow: hidden; }
+.cf252-ov-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease, background 0.3s ease; }
+.cf252-ov-bar-limit { position: absolute; top: -2px; bottom: -2px; width: 2px; background: #fff; }
