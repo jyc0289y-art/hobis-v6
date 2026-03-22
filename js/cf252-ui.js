@@ -713,6 +713,12 @@ function cf252ShowDoseResult(result, limit, pass) {
             </div>
         </div>
 
+        <div class="cf252-3d-section" style="text-align:center; padding:8px 0;">
+            <button class="btn-outline" onclick="cf252Open3DOverlay()" style="width:100%; padding:8px; font-size:0.85rem; cursor:pointer;">
+                &#x1F4CB; 3D HOT CELL VIEWER — RT룸 수조 핫셀 구조
+            </button>
+        </div>
+
         <div class="cf252-constants-section">
             <div class="header" style="border:none; font-size:0.85rem;">APPLIED CONSTANTS</div>
             <div class="spec-report">
@@ -1538,6 +1544,37 @@ function cf252CloseOverlay() {
     if (overlay._keyHandler) document.removeEventListener('keydown', overlay._keyHandler);
     overlay.classList.remove('cf252-ov-visible');
     setTimeout(() => overlay.remove(), 200);
+}
+
+// === 3D 핫셀 뷰어 오버레이 ===
+function cf252Open3DOverlay() {
+    let ov = document.getElementById('cf252-3d-overlay');
+    if (ov) ov.remove();
+
+    ov = document.createElement('div');
+    ov.id = 'cf252-3d-overlay';
+    ov.className = 'cf252-overlay';
+    ov.innerHTML = `
+        <div class="cf252-ov-content" style="width:95vw; height:95vh; max-width:none; padding:0; position:relative;">
+            <button onclick="cf252Close3DOverlay()" style="position:absolute; top:8px; right:12px; z-index:20; background:rgba(10,10,12,0.8); color:#ff3300; border:1px solid #ff3300; padding:4px 10px; cursor:pointer; font-size:14px; border-radius:3px;">✕ CLOSE</button>
+            <iframe src="cf252-hotcell-3d.html" style="width:100%; height:100%; border:none; border-radius:8px;"></iframe>
+        </div>`;
+
+    document.body.appendChild(ov);
+
+    ov.addEventListener('click', (e) => { if (e.target === ov) cf252Close3DOverlay(); });
+    ov._keyHandler = (e) => { if (e.key === 'Escape') cf252Close3DOverlay(); };
+    document.addEventListener('keydown', ov._keyHandler);
+
+    setTimeout(() => ov.classList.add('cf252-ov-visible'), 30);
+}
+
+function cf252Close3DOverlay() {
+    const ov = document.getElementById('cf252-3d-overlay');
+    if (!ov) return;
+    if (ov._keyHandler) document.removeEventListener('keydown', ov._keyHandler);
+    ov.classList.remove('cf252-ov-visible');
+    setTimeout(() => ov.remove(), 200);
 }
 
 // === 현재 입력 상태에서 sources/shielding 수집 (오버레이 열기용) ===

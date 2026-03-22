@@ -105,10 +105,12 @@ const CF252 = {
     // === 프리셋 시나리오 ===
     // 거리/차폐: HJSR-01 REV.13 안전보고서 기반
     // 저장시설 내부: 9,200×3,600×6,000mm, 외벽 콘크리트 1,200mm
-    // 핫셀: 2,650×1,800×4,550mm/셀
-    //   C1-DP1,3,4 방향: 콘크리트 경로 1,615mm (p.95 계산식 기준)
-    //   C1-DP2 방향: 콘크리트 경로 1,350mm (p.96 계산식 기준)
-    //   천장: 600mm
+    // 핫셀 (p.70 제원): 내부 2,650×1,800×4,550mm/셀
+    //   C1-DP1,3,4 방향: 콘크리트 벽 1,200mm
+    //   C1-DP2 방향: 콘크리트 벽 1,350mm
+    //   천장: 콘크리트 600mm
+    //   저장 시 콘크리트 경로 (저장함 구조체 포함): DP1,3,4 = 1,615mm (p.95)
+    //   취급 시 콘크리트 경로 (벽체만): DP2 = 1,350mm (p.96)
     // S-DP = 선량평가점 (Safety-Dose evaluation Point)
     PRESETS: [
         {
@@ -171,24 +173,28 @@ const CF252 = {
             ],
             reportRef: 'S-DP02~05(허), p.58: 7.92×10⁻⁹ mSv/h',
         },
+        // === 핫셀 취급 프리셋 (나선원 노출, 벽 내면 밀착 가정) ===
+        // p.70 제원: DP1,3,4 콘크리트 1,200mm / DP2 콘크리트 1,350mm / 천장 600mm
+        // p.96: 취급 시 벽체 차폐만 적용, 납 0mm, 평가점 벽 외면 +100mm
+        // 천장: 선원 바닥 가정, 내부높이 4,550mm + 콘크리트 600mm + 평가점 100mm
         {
-            id: 'hotcell_storage',
-            name: '핫셀 저장 2.7Ci (C1-DP1,3,4 벽외부, S-DP06~08)',
-            description: '셀당 2.7Ci, 콘크리트 경로 1,615mm, 평가점 +100mm — 보고서 p.95',
+            id: 'hotcell_handling_dp134',
+            name: '핫셀 취급 2.7Ci — C1-DP1,3,4 벽외부',
+            description: '나선원 노출, 벽 내면 밀착, 콘크리트 1,200mm + 평가점 100mm — p.70 제원 기반',
             mode: 'storage',
             sources: [
-                { activity_mCi: 2700, distance_cm: 171.5, container: null },
+                { activity_mCi: 2700, distance_cm: 130, container: null },
             ],
             shielding: [
-                { material: 'Concrete', thickness_cm: 161.5 },
+                { material: 'Concrete', thickness_cm: 120 },
             ],
             extraShielding: [],
-            reportRef: 'C1-DP1,3,4 콘크리트 1,615mm, 평가거리 1,715mm (p.95): γ=4.58×10⁻¹⁰ + n=3.4×10⁻¹⁵ mSv/h',
+            reportRef: '핫셀 취급 DP1,3,4 — 콘크리트 1,200mm, 평가거리 1,300mm (p.70 제원)',
         },
         {
-            id: 'hotcell_storage_dp2',
-            name: '핫셀 저장 2.7Ci (C1-DP2 벽외부, S-DP09)',
-            description: '셀당 2.7Ci, 콘크리트 경로 1,350mm, 평가점 +100mm — 보고서 p.96',
+            id: 'hotcell_handling_dp2',
+            name: '핫셀 취급 2.7Ci — C1-DP2 벽외부',
+            description: '나선원 노출, 벽 내면 밀착, 콘크리트 1,350mm + 평가점 100mm — 보고서 p.96',
             mode: 'storage',
             sources: [
                 { activity_mCi: 2700, distance_cm: 145, container: null },
@@ -200,91 +206,18 @@ const CF252 = {
             reportRef: 'C1-DP2 콘크리트 1,350mm, 평가거리 1,450mm (p.96): γ=2.47×10⁻⁸ + n=2.04×10⁻¹² mSv/h',
         },
         {
-            id: 'hotcell_ceiling',
-            name: '핫셀 저장 2.7Ci (천장, S-DP10~12)',
-            description: '셀당 2.7Ci, 천장 600mm, 평가점 +100mm — 보고서 p.70',
-            mode: 'storage',
-            sources: [
-                { activity_mCi: 2700, distance_cm: 70, container: null },
-            ],
-            shielding: [
-                { material: 'Concrete', thickness_cm: 60 },
-            ],
-            extraShielding: [],
-            reportRef: '핫셀 천장 600mm, 평가거리 700mm (p.70)',
-        },
-        // === 핫셀 내 취급 프리셋 (용기 개봉, 나선원 노출 상태) ===
-        {
-            id: 'hotcell_handling_window_leadglass',
-            name: '핫셀 취급 2.7Ci — 납유리창 (참고)',
-            description: '나선원 노출 취급, 납유리 차폐창(Pb eq. 5cm) 통과, 창 전면 150cm — 중성자 비차폐 경고',
-            mode: 'storage',
-            sources: [
-                { activity_mCi: 2700, distance_cm: 150, container: null },
-            ],
-            shielding: [
-                { material: 'Pb', thickness_cm: 5 },   // 납유리 차폐창 Pb 등가 ~5cm
-            ],
-            extraShielding: [],
-            reportRef: '핫셀 납유리창 — Pb eq. 5cm, 중성자 거의 비차폐 (⚠ 참고용, Cf-252 부적합)',
-        },
-        {
-            id: 'hotcell_handling_window_water',
-            name: '핫셀 취급 2.7Ci — 수조창 물30+납5cm',
-            description: '나선원 노출 취급, 아크릴 수조창 물30cm+납5cm, 창 전면 150cm — 중성자+감마 복합 차폐',
-            mode: 'storage',
-            sources: [
-                { activity_mCi: 2700, distance_cm: 150, container: null },
-            ],
-            shielding: [
-                { material: 'Water', thickness_cm: 30 },   // 아크릴 수조 내 물 (중성자 감속)
-                { material: 'Pb', thickness_cm: 5 },        // 납판 (감마 차폐)
-            ],
-            extraShielding: [],
-            reportRef: '핫셀 수조창 — 물30cm(n)+납5cm(γ), 중성자+감마 복합 차폐 (≈7.2 μSv/h)',
-        },
-        {
-            id: 'hotcell_handling_window_water_large',
-            name: '핫셀 취급 2.7Ci — 수조창 물50+납5cm (대형)',
-            description: '나선원 노출 취급, 아크릴 대형 수조창 물50cm+납5cm, 창 전면 150cm — 일반인 기준 충족',
-            mode: 'storage',
-            sources: [
-                { activity_mCi: 2700, distance_cm: 150, container: null },
-            ],
-            shielding: [
-                { material: 'Water', thickness_cm: 50 },
-                { material: 'Pb', thickness_cm: 5 },
-            ],
-            extraShielding: [],
-            reportRef: '핫셀 대형 수조창 — 물50cm(n)+납5cm(γ), 일반인 기준 충족 (≈1.3 μSv/h)',
-        },
-        {
-            id: 'hotcell_handling_wall',
-            name: '핫셀 취급 2.7Ci — 벽 외부 (C1-DP1,3,4)',
-            description: '나선원 노출 취급, 콘크리트 경로 1,615mm, 평가점 +100mm',
-            mode: 'storage',
-            sources: [
-                { activity_mCi: 2700, distance_cm: 171.5, container: null },
-            ],
-            shielding: [
-                { material: 'Concrete', thickness_cm: 161.5 },
-            ],
-            extraShielding: [],
-            reportRef: '핫셀 취급 C1-DP1,3,4 — 저장 시나리오와 동일 경로 (p.95)',
-        },
-        {
             id: 'hotcell_handling_ceiling',
             name: '핫셀 취급 2.7Ci — 천장',
-            description: '나선원 노출 취급 (높은 위치 작업), 천장 600mm, 평가점 +100mm',
+            description: '나선원 노출, 선원 바닥 가정, 내부높이 4,550mm + 천장 콘크리트 600mm + 평가점 100mm',
             mode: 'storage',
             sources: [
-                { activity_mCi: 2700, distance_cm: 70, container: null },
+                { activity_mCi: 2700, distance_cm: 525, container: null },
             ],
             shielding: [
                 { material: 'Concrete', thickness_cm: 60 },
             ],
             extraShielding: [],
-            reportRef: '핫셀 취급 천장 — 저장 시나리오와 동일 (p.70), 높은 위치 작업 시 보수적',
+            reportRef: '핫셀 취급 천장 — 바닥 선원 가정, 4,550+600+100=5,250mm (p.70 제원)',
         },
 
         // === 성능시험실(T) RT룸 내 아크릴+물 핫셀 프리셋 ===
@@ -394,6 +327,54 @@ const CF252 = {
             ],
             extraShielding: [],
             reportRef: 'RT핫셀 천장 — 물30(n)+납5(γ), 선원-천장20+차폐35+외30=85cm, 관리구역 내부 평가',
+        },
+
+        // === RT핫셀 설계 탐색 — 콘크리트 핫셀 수조창 대안 (보고서 외) ===
+        // 기존 콘크리트 핫셀에 수조창/납유리창을 적용하는 설계 탐색용
+        // 거리 150cm = 선원~창 전면 거리 (핫셀 내부 기하 기반)
+        {
+            id: 'rt_hotcell_window_leadglass_ref',
+            name: 'RT핫셀 납유리창만 Pb5cm (2.7Ci, 참고)',
+            description: '설계 탐색: 납유리 차폐창(Pb eq. 5cm), 선원-창 150cm — 중성자 비차폐 경고',
+            mode: 'storage',
+            sources: [
+                { activity_mCi: 2700, distance_cm: 150, container: null },
+            ],
+            shielding: [
+                { material: 'Pb', thickness_cm: 5 },
+            ],
+            extraShielding: [],
+            reportRef: '설계 탐색 — Pb eq. 5cm, 중성자 거의 비차폐 (⚠ Cf-252 부적합)',
+        },
+        {
+            id: 'rt_hotcell_window_water_30pb5',
+            name: 'RT핫셀 수조창 물30+납5cm (2.7Ci)',
+            description: '설계 탐색: 아크릴 수조창 물30cm+납5cm, 선원-창 150cm — 중성자+감마 복합 차폐',
+            mode: 'storage',
+            sources: [
+                { activity_mCi: 2700, distance_cm: 150, container: null },
+            ],
+            shielding: [
+                { material: 'Water', thickness_cm: 30 },
+                { material: 'Pb', thickness_cm: 5 },
+            ],
+            extraShielding: [],
+            reportRef: '설계 탐색 — 물30cm(n)+납5cm(γ), 복합 차폐 (≈7.2 μSv/h)',
+        },
+        {
+            id: 'rt_hotcell_window_water_50pb5',
+            name: 'RT핫셀 수조창 물50+납5cm (2.7Ci, 대형)',
+            description: '설계 탐색: 아크릴 대형 수조창 물50cm+납5cm, 선원-창 150cm — 일반인 기준 충족',
+            mode: 'storage',
+            sources: [
+                { activity_mCi: 2700, distance_cm: 150, container: null },
+            ],
+            shielding: [
+                { material: 'Water', thickness_cm: 50 },
+                { material: 'Pb', thickness_cm: 5 },
+            ],
+            extraShielding: [],
+            reportRef: '설계 탐색 — 물50cm(n)+납5cm(γ), 일반인 기준 충족 (≈1.3 μSv/h)',
         },
 
         // === 성능시험실(T) RT룸 외벽 차폐 프리셋 ===
