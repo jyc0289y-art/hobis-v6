@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cf-252 저장시설 콘크리트 핫셀 — 3D 구조 시각화</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#0a0a0c; color:#c0d0d8; font-family:'Segoe UI',sans-serif; overflow:hidden; }
+#canvas3d { width:100vw; height:100vh; display:block; }
+#hud {
+    position:fixed; top:0; left:0; width:340px; padding:15px;
+    background:rgba(10,10,12,0.92); border-right:1px solid #2a3b47;
+    height:100vh; overflow-y:auto; z-index:10;
+    font-size:12px; line-height:1.6;
+}
+#hud h1 { font-size:16px; color:#00ff33; margin-bottom:5px; font-family:monospace; }
+#hud h2 { font-size:13px; color:#00f7ff; margin:12px 0 5px; border-bottom:1px solid #2a3b47; padding-bottom:3px; }
+#hud .sub { font-size:10px; color:#5f7481; margin-bottom:10px; }
+.legend { display:flex; align-items:center; gap:8px; margin:3px 0; font-size:11px; }
+.legend .swatch { width:14px; height:14px; border-radius:2px; flex-shrink:0; border:1px solid #2a3b47; }
+.spec { display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px dotted #1a2530; }
+.spec-k { color:#5f7481; } .spec-v { color:#00ff33; font-family:monospace; }
+.dose-table { width:100%; border-collapse:collapse; margin:5px 0; font-size:11px; }
+.dose-table th { background:#111418; color:#00f7ff; padding:3px 5px; text-align:left; border:1px solid #2a3b47; }
+.dose-table td { padding:3px 5px; border:1px solid #1a2530; }
+.pass { color:#00ff33; } .fail { color:#ff3300; }
+.ctrl { margin:8px 0; }
+.ctrl label { display:block; font-size:10px; color:#5f7481; margin-bottom:2px; }
+.ctrl select, .ctrl input[type=range] { width:100%; background:#111418; color:#c0d0d8; border:1px solid #2a3b47; padding:3px; font-size:11px; }
+.btn-row { display:flex; gap:5px; margin:8px 0; }
+.btn-toggle { flex:1; padding:5px; background:#111418; color:#5f7481; border:1px solid #2a3b47; cursor:pointer; text-align:center; font-size:10px; }
+.btn-toggle.active { color:#00ff33; border-color:#00ff33; }
+#info-bar {
+    position:fixed; bottom:0; left:0; right:0; padding:6px 15px;
+    background:rgba(10,10,12,0.9); border-top:1px solid #2a3b47;
+    font-size:10px; color:#5f7481; text-align:center; z-index:10;
+}
+</style>
+</head>
+<body>
+<div id="hud">
+    <h1>Cf-252 콘크리트 핫셀</h1>
+    <div class="sub">저장시설 내 콘크리트 차폐 핫셀 구조 — 3D 시각화</div>
+
+    <h2>구조 범례</h2>
+    <div class="legend"><div class="swatch" style="background:rgba(160,155,140,0.85);"></div> 콘크리트 벽체</div>
+    <div class="legend"><div class="swatch" style="background:rgba(120,110,95,0.9);"></div> 콘크리트 천장 (감마/중성자 차폐)</div>
+    <div class="legend"><div class="swatch" style="background:rgba(0,247,255,0.3); border:1px solid rgba(0,247,255,0.8);"></div> 내부 작업공간</div>
+    <div class="legend"><div class="swatch" style="background:rgba(0,255,50,0.8);"></div> Cf-252 선원 위치</div>
+    <div class="legend"><div class="swatch" style="background:rgba(255,100,0,0.6);"></div> 선량 평가점</div>
+
+    <h2>핫셀 치수</h2>
+    <div class="spec"><span class="spec-k">내부 공간</span><span class="spec-v" id="innerDim">265 × 180 × 455 cm</span></div>
+    <div class="spec"><span class="spec-k">벽 DP1,3,4</span><span class="spec-v" id="wallDP134">콘크리트 120 cm</span></div>
+    <div class="spec"><span class="spec-k">벽 DP2</span><span class="spec-v" id="wallDP2">콘크리트 135 cm</span></div>
+    <div class="spec"><span class="spec-k">천장</span><span class="spec-v" id="ceilSpec">콘크리트 60 cm</span></div>
+    <div class="spec"><span class="spec-k">바닥</span><span class="spec-v">콘크리트 기초</span></div>
+    <div class="spec"><span class="spec-k">외부 치수</span><span class="spec-v" id="outerDim">505 × 435 × 525 cm</span></div>
+    <div class="spec"><span class="spec-k">콘크리트 중량</span><span class="spec-v" id="concreteWeight">≈ 50,000 kg</span></div>
+
+    <h2>수용 용기</h2>
+    <div class="spec"><span class="spec-k">STC-100</span><span class="spec-v">Ø606 × H874mm, 192kg</span></div>
+    <div class="spec"><span class="spec-k">УКТIIB-313</span><span class="spec-v">Ø720 × H920mm, 460kg</span></div>
+
+    <h2>선량 평가 (관리구역 내부 ≤25 μSv/h)</h2>
+    <div class="ctrl">
+        <label>선원 방사능</label>
+        <select id="actSelect" onchange="updateDose()">
+            <option value="54">54 mCi (STC-100 × 1)</option>
+            <option value="2700" selected>2,700 mCi (2.7 Ci)</option>
+        </select>
+    </div>
+    <table class="dose-table">
+        <thead><tr><th>평가 위치</th><th>선량률</th><th>판정</th></tr></thead>
+        <tbody id="doseBody"></tbody>
+    </table>
+
+    <h2>뷰 설정</h2>
+    <div class="btn-row">
+        <div class="btn-toggle active" onclick="setView('perspective',this)">투시도</div>
+        <div class="btn-toggle" onclick="setView('front',this)">정면</div>
+        <div class="btn-toggle" onclick="setView('side',this)">측면</div>
+        <div class="btn-toggle" onclick="setView('top',this)">평면</div>
+    </div>
+    <div class="btn-row">
+        <div class="btn-toggle active" id="btnLabels" onclick="toggleLabels(this)">치수 표시</div>
+        <div class="btn-toggle active" id="btnDosePoints" onclick="toggleDosePoints(this)">평가점 표시</div>
+        <div class="btn-toggle" id="btnCutaway" onclick="toggleCutaway(this)">단면 보기</div>
+    </div>
+    <div class="btn-row">
+        <div class="btn-toggle active" id="btnHuman" onclick="toggleHuman(this)">사람 모델</div>
+        <div class="btn-toggle active" id="btnDimLines" onclick="toggleDimLines(this)">치수선</div>
+    </div>
+    <div class="ctrl">
+        <label>벽체 투명도</label>
+        <input type="range" id="wallOpacity" min="0.2" max="1.0" step="0.05" value="0.85" oninput="updateOpacity()">
+    </div>
+</div>
+
+<canvas id="canvas3d"></canvas>
+<div id="info-bar">마우스 드래그: 회전 | 스크롤: 줌 | Shift+드래그: 이동 | HOBIS v6.0 Cf-252 Concrete Hot Cell Visualizer</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+// === CONSTANTS (from cf252.js) ===
+const HVL_G = { Pb: 0.82, Water: 10.0, Concrete: 6.1 };
+const HVL_N = { PE: 1.85, Pb: 3.45, Water: 2.3, Concrete: 5.8 };
+const GAMMA_CONST = 23.1;
+const NEUTRON_CONST = 411.0;
+
+function doseCalc(act, dist, shields) {
+    let g = GAMMA_CONST * act / (dist * dist);
+    let n = NEUTRON_CONST * act / (dist * dist);
+    shields.forEach(s => {
+        const hvlG = HVL_G[s.mat] || 999;
+        const hvlN = HVL_N[s.mat] || 999;
+        g *= Math.pow(0.5, s.t / hvlG);
+        n *= Math.pow(0.5, s.t / hvlN);
+    });
+    return { g: g * 1000, n: n * 1000, total: (g + n) * 1000 }; // μSv/h
+}
+
+// === HOT CELL DIMENSIONS (cm) — HJSR-01 REV.13 p.70 ===
+const HC = {
+    innerW: 265,   // 내부 폭 2,650mm
+    innerD: 180,   // 내부 깊이 1,800mm
+    innerH: 455,   // 내부 높이 4,550mm
+    wallDP134: 120, // DP1,3,4 방향 콘크리트 벽 1,200mm
+    wallDP2: 135,   // DP2 방향 콘크리트 벽 1,350mm
+    ceilT: 60,      // 천장 콘크리트 600mm
+    floorT: 30,     // 바닥 콘크리트 (가정)
+};
+HC.outerW = HC.innerW + HC.wallDP134 * 2;
+HC.outerD = HC.innerD + HC.wallDP134 + HC.wallDP2;
+HC.outerH = HC.innerH + HC.ceilT + HC.floorT;
+
+// === THREE.JS SETUP ===
+const canvas = document.getElementById('canvas3d');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a0c);
+scene.fog = new THREE.Fog(0x0a0a0c, 1200, 3000);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 5000);
+camera.position.set(700, 550, 700);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.target.set(0, 150, 0);
+controls.update();
+
+// CSS2D for labels
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.top = '0';
+labelRenderer.domElement.style.pointerEvents = 'none';
+document.body.appendChild(labelRenderer.domElement);
+
+// === LIGHTING ===
+const ambientLight = new THREE.AmbientLight(0x334455, 0.8);
+scene.add(ambientLight);
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+dirLight.position.set(400, 800, 500);
+dirLight.castShadow = true;
+dirLight.shadow.mapSize.set(2048, 2048);
+dirLight.shadow.camera.left = -600;
+dirLight.shadow.camera.right = 600;
+dirLight.shadow.camera.top = 600;
+dirLight.shadow.camera.bottom = -600;
+scene.add(dirLight);
+const pointLight = new THREE.PointLight(0x00ff33, 0.5, 800);
+pointLight.position.set(0, 200, 0);
+scene.add(pointLight);
+
+// === MATERIALS ===
+const matConcrete = new THREE.MeshStandardMaterial({
+    color: 0xa09b8c, roughness: 0.95, metalness: 0.05,
+    transparent: true, opacity: 0.85,
+});
+const matConcreteCeil = new THREE.MeshStandardMaterial({
+    color: 0x786e5f, roughness: 0.9, metalness: 0.05,
+    transparent: true, opacity: 0.85,
+});
+const matConcreteFloor = new THREE.MeshStandardMaterial({
+    color: 0x666058, roughness: 0.95, metalness: 0.1,
+});
+const matSource = new THREE.MeshStandardMaterial({
+    color: 0x00ff33, emissive: 0x00ff33, emissiveIntensity: 2,
+});
+const matDosePoint = new THREE.MeshStandardMaterial({
+    color: 0xff6600, emissive: 0xff6600, emissiveIntensity: 1.5,
+});
+const matContainer = new THREE.MeshStandardMaterial({
+    color: 0xddaa44, roughness: 0.5, metalness: 0.6, transparent: true, opacity: 0.7,
+});
+const matFloor = new THREE.MeshStandardMaterial({
+    color: 0x222228, roughness: 0.9, metalness: 0.1,
+});
+
+// === GROUPS ===
+const hotcellGroup = new THREE.Group();
+const labelsGroup = new THREE.Group();
+const dosePointsGroup = new THREE.Group();
+const humanGroup = new THREE.Group();
+const dimLinesGroup = new THREE.Group();
+scene.add(hotcellGroup);
+scene.add(labelsGroup);
+scene.add(dosePointsGroup);
+scene.add(humanGroup);
+scene.add(dimLinesGroup);
+
+// === FLOOR ===
+const floorGeo = new THREE.PlaneGeometry(2000, 2000);
+const floor = new THREE.Mesh(floorGeo, matFloor);
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -1;
+floor.receiveShadow = true;
+scene.add(floor);
+
+const grid = new THREE.GridHelper(2000, 40, 0x1a2530, 0x111820);
+grid.position.y = 0;
+scene.add(grid);
+
+// === BUILD HOT CELL ===
+const S = 1;
+
+function buildHotCell() {
+    while (hotcellGroup.children.length) hotcellGroup.remove(hotcellGroup.children[0]);
+
+    const iW = HC.innerW, iD = HC.innerD, iH = HC.innerH;
+    const w134 = HC.wallDP134, w2 = HC.wallDP2, cT = HC.ceilT, fT = HC.floorT;
+
+    // Origin at center-bottom of hot cell
+
+    // === CONCRETE FLOOR ===
+    const oW = iW + w134 * 2;
+    const oD = iD + w134 + w2;
+    const flrGeo = new THREE.BoxGeometry(oW * S, fT * S, oD * S);
+    const flr = new THREE.Mesh(flrGeo, matConcreteFloor);
+    flr.position.set(0, fT / 2 * S, (w2 - w134) / 2 * S);
+    flr.receiveShadow = true;
+    hotcellGroup.add(flr);
+
+    const yFloor = fT * S;
+
+    // === CONCRETE WALLS ===
+    // Back wall (DP1,3,4 direction) — 120cm
+    const backGeo = new THREE.BoxGeometry(oW * S, iH * S, w134 * S);
+    const backWall = new THREE.Mesh(backGeo, matConcrete);
+    backWall.position.set(0, yFloor + iH / 2 * S, -(iD / 2 + w134 / 2) * S);
+    backWall.castShadow = true;
+    hotcellGroup.add(backWall);
+
+    // Front wall (DP2 direction) — 135cm
+    const frontGeo = new THREE.BoxGeometry(oW * S, iH * S, w2 * S);
+    const frontWall = new THREE.Mesh(frontGeo, matConcrete);
+    frontWall.position.set(0, yFloor + iH / 2 * S, (iD / 2 + w2 / 2) * S);
+    frontWall.castShadow = true;
+    hotcellGroup.add(frontWall);
+
+    // Left wall (DP1,3,4 direction) — 120cm
+    const leftGeo = new THREE.BoxGeometry(w134 * S, iH * S, iD * S);
+    const leftWall = new THREE.Mesh(leftGeo, matConcrete);
+    leftWall.position.set(-(iW / 2 + w134 / 2) * S, yFloor + iH / 2 * S, 0);
+    leftWall.castShadow = true;
+    hotcellGroup.add(leftWall);
+
+    // Right wall (DP1,3,4 direction) — 120cm
+    const rightWall = new THREE.Mesh(leftGeo, matConcrete);
+    rightWall.position.set((iW / 2 + w134 / 2) * S, yFloor + iH / 2 * S, 0);
+    rightWall.castShadow = true;
+    hotcellGroup.add(rightWall);
+
+    // === CEILING ===
+    const ceilGeo = new THREE.BoxGeometry(oW * S, cT * S, oD * S);
+    const ceil = new THREE.Mesh(ceilGeo, matConcreteCeil);
+    ceil.position.set(0, yFloor + iH * S + cT / 2 * S, (w2 - w134) / 2 * S);
+    ceil.castShadow = true;
+    hotcellGroup.add(ceil);
+
+    // === INNER CAVITY VISUALIZATION ===
+    const cavityGeo = new THREE.BoxGeometry(iW * S, iH * S, iD * S);
+    const cavityEdges = new THREE.EdgesGeometry(cavityGeo);
+    const cavityLine = new THREE.LineSegments(cavityEdges, new THREE.LineBasicMaterial({
+        color: 0x00f7ff, transparent: true, opacity: 0.6,
+    }));
+    cavityLine.position.set(0, yFloor + iH / 2 * S, 0);
+    hotcellGroup.add(cavityLine);
+
+    // Inner floor surface
+    const innerFloorGeo = new THREE.PlaneGeometry(iW * S, iD * S);
+    const innerFloorMat = new THREE.MeshBasicMaterial({
+        color: 0x00f7ff, transparent: true, opacity: 0.06, side: THREE.DoubleSide,
+    });
+    const innerFloor = new THREE.Mesh(innerFloorGeo, innerFloorMat);
+    innerFloor.rotation.x = -Math.PI / 2;
+    innerFloor.position.set(0, yFloor + 0.5 * S, 0);
+    hotcellGroup.add(innerFloor);
+
+    // Inner cavity grid
+    const innerGridGeo = new THREE.PlaneGeometry(iW * S, iD * S);
+    const innerGridMat = new THREE.MeshBasicMaterial({
+        color: 0x00f7ff, transparent: true, opacity: 0.03, side: THREE.DoubleSide, wireframe: true,
+    });
+    const innerGrid = new THREE.Mesh(innerGridGeo, innerGridMat);
+    innerGrid.rotation.x = -Math.PI / 2;
+    innerGrid.position.set(0, yFloor + 1 * S, 0);
+    hotcellGroup.add(innerGrid);
+
+    // === SOURCE INDICATOR ===
+    const srcGeo = new THREE.SphereGeometry(8 * S, 16, 16);
+    const src = new THREE.Mesh(srcGeo, matSource);
+    src.position.set(0, yFloor + 80 * S, 0);
+    hotcellGroup.add(src);
+
+    const glowGeo = new THREE.SphereGeometry(16 * S, 16, 16);
+    const glowMat = new THREE.MeshBasicMaterial({ color: 0x00ff33, transparent: true, opacity: 0.15 });
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    glow.position.copy(src.position);
+    hotcellGroup.add(glow);
+
+    // === CONTAINER (STC-100 silhouette) ===
+    const contGeo = new THREE.CylinderGeometry(30.3 * S, 30.3 * S, 87.4 * S, 16);
+    const cont = new THREE.Mesh(contGeo, matContainer);
+    cont.position.set(0, yFloor + 87.4 / 2 * S, 0);
+    hotcellGroup.add(cont);
+
+    // === DOSE EVALUATION POINTS ===
+    buildDosePoints(yFloor);
+
+    // === LABELS ===
+    buildLabels(yFloor);
+
+    // === HUMAN FIGURE ===
+    buildHumanFigure();
+
+    // === DIMENSION LINES ===
+    buildDimLines();
+}
+
+function buildDosePoints(yFloor) {
+    while (dosePointsGroup.children.length) dosePointsGroup.remove(dosePointsGroup.children[0]);
+
+    const dpGeo = new THREE.SphereGeometry(6 * S, 8, 8);
+    const iW = HC.innerW, iD = HC.innerD, iH = HC.innerH;
+    const w134 = HC.wallDP134, w2 = HC.wallDP2, cT = HC.ceilT;
+
+    const points = [
+        { name: 'C1-DP1 벽외부', pos: [-(iW / 2 + w134 + 10), iH / 2, 0], id: 'dp1' },
+        { name: 'C1-DP2 벽외부', pos: [0, iH / 2, iD / 2 + w2 + 10], id: 'dp2' },
+        { name: 'C1-DP3 벽외부', pos: [iW / 2 + w134 + 10, iH / 2, 0], id: 'dp3' },
+        { name: '천장 상부', pos: [0, iH + cT + 10, 0], id: 'ceil' },
+    ];
+
+    points.forEach(p => {
+        const dp = new THREE.Mesh(dpGeo, matDosePoint);
+        dp.position.set(p.pos[0] * S, yFloor + p.pos[1] * S, p.pos[2] * S);
+        dosePointsGroup.add(dp);
+
+        const srcPos = new THREE.Vector3(0, yFloor + 80 * S, 0);
+        const lineGeo = new THREE.BufferGeometry().setFromPoints([srcPos, dp.position]);
+        const lineMat = new THREE.LineDashedMaterial({ color: 0xff6600, dashSize: 10, gapSize: 6, transparent: true, opacity: 0.5 });
+        const line = new THREE.Line(lineGeo, lineMat);
+        line.computeLineDistances();
+        dosePointsGroup.add(line);
+
+        const lbl = makeLabel(p.name, '#ff6600');
+        lbl.position.copy(dp.position);
+        lbl.position.y += 15 * S;
+        dosePointsGroup.add(lbl);
+    });
+}
+
+function buildLabels(yFloor) {
+    while (labelsGroup.children.length) labelsGroup.remove(labelsGroup.children[0]);
+
+    const iW = HC.innerW, iD = HC.innerD, iH = HC.innerH;
+    const w134 = HC.wallDP134, w2 = HC.wallDP2, cT = HC.ceilT;
+
+    const dims = [
+        { text: `내부 ${iW}×${iD}×${iH}cm`, pos: [0, yFloor + iH * S + 80 * S, 0], color: '#00f7ff' },
+        { text: `콘크리트 ${w134}cm (DP1,3,4)`, pos: [-(iW / 2 + w134 / 2) * S, yFloor + iH * S + 50 * S, 0], color: '#a09b8c' },
+        { text: `콘크리트 ${w2}cm (DP2)`, pos: [0, yFloor + iH * 0.5 * S, (iD / 2 + w2 + 15) * S], color: '#a09b8c' },
+        { text: `천장 ${cT}cm`, pos: [0, yFloor + (iH + cT / 2) * S + 30 * S, 0], color: '#786e5f' },
+        { text: 'STC-100 용기', pos: [40 * S, yFloor + 90 * S, 0], color: '#ddaa44' },
+    ];
+
+    dims.forEach(d => {
+        const lbl = makeLabel(d.text, d.color);
+        lbl.position.set(d.pos[0], d.pos[1], d.pos[2]);
+        labelsGroup.add(lbl);
+    });
+}
+
+// === HUMAN FIGURE (175cm tall) ===
+function buildHumanFigure() {
+    while (humanGroup.children.length) humanGroup.remove(humanGroup.children[0]);
+
+    const matSkin = new THREE.MeshStandardMaterial({ color: 0xd4a574, roughness: 0.8 });
+    const matCloth = new THREE.MeshStandardMaterial({ color: 0x2255aa, roughness: 0.7 });
+    const matShoe = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.9 });
+    const matHair = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 });
+
+    const h = 175;
+    const person = new THREE.Group();
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(10 * S, 12, 10), matSkin);
+    head.position.y = (h - 10) * S;
+    person.add(head);
+
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(10.5 * S, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2), matHair);
+    hair.position.y = (h - 10) * S;
+    person.add(hair);
+
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(4 * S, 5 * S, 8 * S, 8), matSkin);
+    neck.position.y = (h - 24) * S;
+    person.add(neck);
+
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(14 * S, 12 * S, 50 * S, 8), matCloth);
+    torso.position.y = (h - 53) * S;
+    person.add(torso);
+
+    [-1, 1].forEach(side => {
+        const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(4 * S, 3.5 * S, 30 * S, 6), matCloth);
+        upperArm.position.set(side * 18 * S, (h - 43) * S, 0);
+        upperArm.rotation.z = side * 0.15;
+        person.add(upperArm);
+        const lowerArm = new THREE.Mesh(new THREE.CylinderGeometry(3.5 * S, 3 * S, 28 * S, 6), matSkin);
+        lowerArm.position.set(side * 20 * S, (h - 73) * S, 0);
+        lowerArm.rotation.z = side * 0.1;
+        person.add(lowerArm);
+        const hand = new THREE.Mesh(new THREE.SphereGeometry(4 * S, 6, 6), matSkin);
+        hand.position.set(side * 21 * S, (h - 89) * S, 0);
+        person.add(hand);
+    });
+
+    [-1, 1].forEach(side => {
+        const upperLeg = new THREE.Mesh(new THREE.CylinderGeometry(6 * S, 5 * S, 42 * S, 6), matCloth);
+        upperLeg.position.set(side * 7 * S, (h - 99) * S, 0);
+        person.add(upperLeg);
+        const lowerLeg = new THREE.Mesh(new THREE.CylinderGeometry(5 * S, 4 * S, 40 * S, 6), matCloth);
+        lowerLeg.position.set(side * 7 * S, (h - 141) * S, 0);
+        person.add(lowerLeg);
+        const shoe = new THREE.Mesh(new THREE.BoxGeometry(10 * S, 6 * S, 16 * S), matShoe);
+        shoe.position.set(side * 7 * S, 3 * S, 3 * S);
+        person.add(shoe);
+    });
+
+    const heightLbl = makeLabel('175 cm', '#ffcc00');
+    heightLbl.position.set(0, (h + 8) * S, 0);
+    person.add(heightLbl);
+
+    const oW = HC.outerW;
+    const oD = HC.outerD;
+    person.position.set((oW / 2 + 60) * S, 0, (oD / 2 + 50) * S);
+    person.castShadow = true;
+    humanGroup.add(person);
+}
+
+// === DIMENSION LINES ===
+function buildDimLines() {
+    while (dimLinesGroup.children.length) dimLinesGroup.remove(dimLinesGroup.children[0]);
+
+    const iW = HC.innerW, iD = HC.innerD, iH = HC.innerH;
+    const w134 = HC.wallDP134, w2 = HC.wallDP2, cT = HC.ceilT, fT = HC.floorT;
+    const yFloor = fT;
+    const oW = HC.outerW;
+    const oD = HC.outerD;
+    const oH = HC.outerH;
+
+    const dimColor = 0xffcc00;
+    const dimMat = new THREE.LineBasicMaterial({ color: dimColor, transparent: true, opacity: 0.8 });
+    const tickMat = new THREE.LineBasicMaterial({ color: dimColor });
+
+    function addDimLine(p1, p2, label, offset) {
+        const o1 = p1.clone().add(offset);
+        const o2 = p2.clone().add(offset);
+        const ext1 = [p1, o1];
+        const ext2 = [p2, o2];
+        const dim = [o1, o2];
+
+        const tickPerp = offset.clone().normalize().multiplyScalar(5 * S);
+
+        [ext1, ext2, dim].forEach(pts => {
+            const geo = new THREE.BufferGeometry().setFromPoints(pts);
+            dimLinesGroup.add(new THREE.Line(geo, dimMat));
+        });
+
+        const tickDir = new THREE.Vector3().subVectors(o2, o1).normalize();
+        const arrowSize = 8 * S;
+        [o1, o2].forEach((pt, i) => {
+            const dir = i === 0 ? tickDir : tickDir.clone().negate();
+            const tip = pt.clone();
+            const a1 = tip.clone().add(dir.clone().multiplyScalar(arrowSize)).add(tickPerp.clone().multiplyScalar(0.5));
+            const a2 = tip.clone().add(dir.clone().multiplyScalar(arrowSize)).add(tickPerp.clone().multiplyScalar(-0.5));
+            const arrowGeo = new THREE.BufferGeometry().setFromPoints([a1, tip, a2]);
+            dimLinesGroup.add(new THREE.Line(arrowGeo, tickMat));
+        });
+
+        const mid = o1.clone().add(o2).multiplyScalar(0.5);
+        const lbl = makeLabel(label, '#ffcc00');
+        lbl.position.copy(mid);
+        dimLinesGroup.add(lbl);
+    }
+
+    // Outer width
+    addDimLine(
+        new THREE.Vector3(-oW / 2 * S, 0, -(iD / 2 + w134 + 30) * S),
+        new THREE.Vector3(oW / 2 * S, 0, -(iD / 2 + w134 + 30) * S),
+        `${oW} cm (외폭)`,
+        new THREE.Vector3(0, 0, -40 * S)
+    );
+
+    // Outer depth
+    addDimLine(
+        new THREE.Vector3((oW / 2 + 30) * S, 0, -(iD / 2 + w134) * S),
+        new THREE.Vector3((oW / 2 + 30) * S, 0, (iD / 2 + w2) * S),
+        `${oD} cm (외깊이)`,
+        new THREE.Vector3(40 * S, 0, 0)
+    );
+
+    // Outer height
+    addDimLine(
+        new THREE.Vector3(-(oW / 2 + 30) * S, 0, -(iD / 2 + w134 + 30) * S),
+        new THREE.Vector3(-(oW / 2 + 30) * S, oH * S, -(iD / 2 + w134 + 30) * S),
+        `${oH} cm (외높이)`,
+        new THREE.Vector3(-40 * S, 0, -25 * S)
+    );
+
+    // Inner width
+    addDimLine(
+        new THREE.Vector3(-iW / 2 * S, yFloor * S, (iD / 2 + w2 + 15) * S),
+        new THREE.Vector3(iW / 2 * S, yFloor * S, (iD / 2 + w2 + 15) * S),
+        `${iW} cm (내폭)`,
+        new THREE.Vector3(0, -20 * S, 15 * S)
+    );
+
+    // Inner height
+    addDimLine(
+        new THREE.Vector3((iW / 2 + 10) * S, yFloor * S, (iD / 2 + w2 + 30) * S),
+        new THREE.Vector3((iW / 2 + 10) * S, (yFloor + iH) * S, (iD / 2 + w2 + 30) * S),
+        `${iH} cm (내높이)`,
+        new THREE.Vector3(25 * S, 0, 15 * S)
+    );
+
+    // Wall thickness — DP1,3,4 (left wall)
+    const wallX = -(iW / 2) * S;
+    addDimLine(
+        new THREE.Vector3(wallX, (yFloor + iH + 20) * S, 0),
+        new THREE.Vector3((wallX - w134 * S), (yFloor + iH + 20) * S, 0),
+        `콘크리트 ${w134}`,
+        new THREE.Vector3(0, 25 * S, 0)
+    );
+
+    // Wall thickness — DP2 (front wall)
+    addDimLine(
+        new THREE.Vector3(0, (yFloor + iH + 20) * S, (iD / 2) * S),
+        new THREE.Vector3(0, (yFloor + iH + 20) * S, (iD / 2 + w2) * S),
+        `콘크리트 ${w2}`,
+        new THREE.Vector3(0, 40 * S, 0)
+    );
+
+    // Ceiling thickness
+    addDimLine(
+        new THREE.Vector3(-(oW / 2 + 15) * S, (yFloor + iH) * S, 0),
+        new THREE.Vector3(-(oW / 2 + 15) * S, (yFloor + iH + cT) * S, 0),
+        `천장 ${cT}`,
+        new THREE.Vector3(-30 * S, 0, 0)
+    );
+}
+
+function makeLabel(text, color) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    div.style.cssText = `color:${color};font-size:11px;font-family:monospace;background:rgba(10,10,12,0.7);padding:2px 5px;border-radius:2px;white-space:nowrap;`;
+    return new CSS2DObject(div);
+}
+
+// === DOSE CALCULATION ===
+function updateDose() {
+    const act = parseInt(document.getElementById('actSelect').value);
+    const iW = HC.innerW, iD = HC.innerD, iH = HC.innerH;
+    const w134 = HC.wallDP134, w2 = HC.wallDP2, cT = HC.ceilT;
+
+    const scenarios = [
+        { name: 'DP1,3,4 (콘크리트 ' + w134 + 'cm)', dist: iW / 2 + w134 + 10, shields: [{ mat: 'Concrete', t: w134 }] },
+        { name: 'DP2 (콘크리트 ' + w2 + 'cm)', dist: iD / 2 + w2 + 10, shields: [{ mat: 'Concrete', t: w2 }] },
+        { name: '천장 (콘크리트 ' + cT + 'cm)', dist: iH + cT + 10, shields: [{ mat: 'Concrete', t: cT }] },
+    ];
+
+    const tbody = document.getElementById('doseBody');
+    tbody.innerHTML = '';
+    scenarios.forEach(s => {
+        const r = doseCalc(act, s.dist, s.shields);
+        const cls = r.total <= 25 ? 'pass' : 'fail';
+        const icon = r.total <= 25 ? '✓' : '✗';
+        tbody.innerHTML += `<tr><td>${s.name}</td><td>${r.total.toFixed(2)} μSv/h</td><td class="${cls}">${icon} ${r.total <= 25 ? '≤25' : '>25'}</td></tr>`;
+    });
+
+    // Update HUD specs
+    document.getElementById('innerDim').textContent = `${HC.innerW} × ${HC.innerD} × ${HC.innerH} cm`;
+    document.getElementById('wallDP134').textContent = `콘크리트 ${w134} cm`;
+    document.getElementById('wallDP2').textContent = `콘크리트 ${w2} cm`;
+    document.getElementById('ceilSpec').textContent = `콘크리트 ${cT} cm`;
+
+    HC.outerW = HC.innerW + w134 * 2;
+    HC.outerD = HC.innerD + w134 + w2;
+    HC.outerH = HC.innerH + cT + HC.floorT;
+    document.getElementById('outerDim').textContent = `${HC.outerW} × ${HC.outerD} × ${HC.outerH} cm`;
+
+    // Concrete weight estimate (density ~2,400 kg/m³)
+    const oW = HC.outerW, oD = HC.outerD;
+    const wallVol = 2 * (w134 * iH * iD) + (w134 * iH * HC.innerW) + (w2 * iH * HC.innerW); // walls
+    const ceilVol = oW * oD * cT;
+    const floorVol = oW * oD * HC.floorT;
+    const totalVol = (wallVol + ceilVol + floorVol) / 1e6; // m³
+    const concreteKg = Math.round(totalVol * 2400);
+    document.getElementById('concreteWeight').textContent = `≈ ${concreteKg.toLocaleString()} kg`;
+}
+
+// === VIEW CONTROLS ===
+function setView(view, el) {
+    document.querySelectorAll('.btn-row .btn-toggle').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    switch (view) {
+        case 'front': camera.position.set(0, 250, 900); break;
+        case 'side': camera.position.set(-900, 250, 0); break;
+        case 'top': camera.position.set(0, 1000, 1); break;
+        default: camera.position.set(700, 550, 700);
+    }
+    controls.update();
+}
+window.setView = setView;
+
+window.toggleLabels = (el) => {
+    el.classList.toggle('active');
+    labelsGroup.visible = el.classList.contains('active');
+};
+window.toggleDosePoints = (el) => {
+    el.classList.toggle('active');
+    dosePointsGroup.visible = el.classList.contains('active');
+};
+window.toggleHuman = (el) => {
+    el.classList.toggle('active');
+    humanGroup.visible = el.classList.contains('active');
+};
+window.toggleDimLines = (el) => {
+    el.classList.toggle('active');
+    dimLinesGroup.visible = el.classList.contains('active');
+};
+
+let cutawayMode = false;
+window.toggleCutaway = (el) => {
+    cutawayMode = !cutawayMode;
+    el.classList.toggle('active');
+    if (cutawayMode) {
+        renderer.clippingPlanes = [new THREE.Plane(new THREE.Vector3(0, 0, -1), 0)];
+        renderer.localClippingEnabled = true;
+    } else {
+        renderer.clippingPlanes = [];
+    }
+};
+
+window.updateOpacity = () => {
+    const v = parseFloat(document.getElementById('wallOpacity').value);
+    matConcrete.opacity = v;
+    matConcreteCeil.opacity = v;
+};
+
+window.updateDose = updateDose;
+
+// === ANIMATION ===
+const clock = new THREE.Clock();
+function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+
+    const t = clock.getElapsedTime();
+    const glows = hotcellGroup.children.filter(c => c.material && c.material.opacity === 0.15);
+    glows.forEach(g => {
+        g.scale.setScalar(1 + Math.sin(t * 2) * 0.15);
+        g.material.opacity = 0.1 + Math.sin(t * 3) * 0.05;
+    });
+
+    renderer.render(scene, camera);
+    labelRenderer.render(scene, camera);
+}
+
+// === POSTMESSAGE API ===
+const isEmbedded = window.parent !== window;
+
+window.addEventListener('message', (event) => {
+    const msg = event.data;
+    if (!msg || !msg.type) return;
+
+    if (msg.type === 'updateParams') {
+        const p = msg.params;
+        if (p.innerW !== undefined) HC.innerW = p.innerW;
+        if (p.innerD !== undefined) HC.innerD = p.innerD;
+        if (p.innerH !== undefined) HC.innerH = p.innerH;
+        if (p.wallDP134 !== undefined) HC.wallDP134 = p.wallDP134;
+        if (p.wallDP2 !== undefined) HC.wallDP2 = p.wallDP2;
+        if (p.ceilT !== undefined) HC.ceilT = p.ceilT;
+        HC.outerW = HC.innerW + HC.wallDP134 * 2;
+        HC.outerD = HC.innerD + HC.wallDP134 + HC.wallDP2;
+        HC.outerH = HC.innerH + HC.ceilT + HC.floorT;
+        buildHotCell();
+        updateDose();
+        if (isEmbedded) {
+            parent.postMessage({ type: 'paramsUpdated', params: { ...HC } }, '*');
+        }
+    }
+
+    if (msg.type === 'setEmbeddedMode') {
+        const hud = document.getElementById('hud');
+        const infoBar = document.getElementById('info-bar');
+        if (hud) hud.style.display = 'none';
+        if (infoBar) infoBar.style.display = 'none';
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    if (msg.type === 'getParams') {
+        parent.postMessage({ type: 'params', params: { ...HC } }, '*');
+    }
+});
+
+// === INIT ===
+buildHotCell();
+updateDose();
+animate();
+
+if (isEmbedded) {
+    parent.postMessage({ type: 'ready', params: { ...HC } }, '*');
+}
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>

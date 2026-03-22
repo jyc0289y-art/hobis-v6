@@ -47,6 +47,7 @@ body { background:#0a0a0c; color:#c0d0d8; font-family:'Segoe UI',sans-serif; ove
     <div class="legend"><div class="swatch" style="background:rgba(0,150,255,0.4);"></div> 아크릴 수조 (물 충전)</div>
     <div class="legend"><div class="swatch" style="background:rgba(100,100,110,0.8);"></div> 납판 (감마 차폐)</div>
     <div class="legend"><div class="swatch" style="background:rgba(180,140,255,0.5);"></div> 납유리창 (시인성 확보)</div>
+    <div class="legend"><div class="swatch" style="background:rgba(0,247,255,0.3); border:1px solid rgba(0,247,255,0.8);"></div> 내부 작업공간</div>
     <div class="legend"><div class="swatch" style="background:rgba(200,200,200,0.9);"></div> SUS304 프레임 (구조보강)</div>
     <div class="legend"><div class="swatch" style="background:rgba(0,255,50,0.8);"></div> Cf-252 선원 위치</div>
     <div class="legend"><div class="swatch" style="background:rgba(255,100,0,0.6);"></div> 선량 평가점</div>
@@ -339,6 +340,36 @@ function buildHotCell() {
     ceilLead.position.set(0, yFloor + iH*S + wT*S + lT/2*S, 0);
     ceilLead.castShadow = true;
     hotcellGroup.add(ceilLead);
+
+    // === INNER CAVITY VISUALIZATION ===
+    // Wireframe box showing internal working space
+    const cavityGeo = new THREE.BoxGeometry(iW*S, iH*S, iD*S);
+    const cavityEdges = new THREE.EdgesGeometry(cavityGeo);
+    const cavityLine = new THREE.LineSegments(cavityEdges, new THREE.LineBasicMaterial({
+        color: 0x00f7ff, transparent: true, opacity: 0.6,
+    }));
+    cavityLine.position.set(0, yFloor + iH/2*S, 0);
+    hotcellGroup.add(cavityLine);
+
+    // Inner floor surface (subtle cyan glow)
+    const innerFloorGeo = new THREE.PlaneGeometry(iW*S, iD*S);
+    const innerFloorMat = new THREE.MeshBasicMaterial({
+        color: 0x00f7ff, transparent: true, opacity: 0.06, side: THREE.DoubleSide,
+    });
+    const innerFloor = new THREE.Mesh(innerFloorGeo, innerFloorMat);
+    innerFloor.rotation.x = -Math.PI / 2;
+    innerFloor.position.set(0, yFloor + 0.5*S, 0);
+    hotcellGroup.add(innerFloor);
+
+    // Inner cavity grid (floor pattern for depth perception)
+    const innerGridGeo = new THREE.PlaneGeometry(iW*S, iD*S);
+    const innerGridMat = new THREE.MeshBasicMaterial({
+        color: 0x00f7ff, transparent: true, opacity: 0.03, side: THREE.DoubleSide, wireframe: true,
+    });
+    const innerGrid = new THREE.Mesh(innerGridGeo, innerGridMat);
+    innerGrid.rotation.x = -Math.PI / 2;
+    innerGrid.position.set(0, yFloor + 1*S, 0);
+    hotcellGroup.add(innerGrid);
 
     // === SUS304 STRUCTURAL FRAME ===
     const fS = HC.frameSize;

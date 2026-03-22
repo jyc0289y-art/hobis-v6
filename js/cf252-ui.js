@@ -713,17 +713,27 @@ function cf252ShowDoseResult(result, limit, pass) {
             </div>
         </div>
 
-        <div class="cf252-3d-section" style="cursor:pointer;" onclick="cf252Open3DOverlay()">
+        ${(function() {
+            const sel = document.getElementById('cf252Preset');
+            const presetId = sel ? sel.value : '';
+            const isConcreteHotcell = presetId.startsWith('hotcell_handling') || presetId.startsWith('stc100_x4_wall') || presetId.startsWith('uktib_x2_wall');
+            const isRTHotcell = presetId.startsWith('rt_hotcell');
+            if (!isConcreteHotcell && !isRTHotcell) return '';
+            const htmlFile = isConcreteHotcell ? 'cf252-hotcell-concrete-3d.html' : 'cf252-hotcell-3d.html';
+            const overlayFn = isConcreteHotcell ? 'cf252OpenConcrete3DOverlay' : 'cf252Open3DOverlay';
+            const title = isConcreteHotcell ? '3D CONCRETE HOT CELL' : '3D HOT CELL STRUCTURE';
+            return `<div class="cf252-3d-section" style="cursor:pointer;" onclick="${overlayFn}()">
             <div class="header" style="border:none; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;">
-                <span>3D HOT CELL STRUCTURE</span>
-                <button class="btn-outline" onclick="event.stopPropagation(); cf252Open3DOverlay()" style="font-size:0.7rem; padding:2px 8px;">&#x2922; EXPAND</button>
+                <span>${title}</span>
+                <button class="btn-outline" onclick="event.stopPropagation(); ${overlayFn}()" style="font-size:0.7rem; padding:2px 8px;">&#x2922; EXPAND</button>
             </div>
             <div style="height:180px; background:#0d1117; border-radius:4px; border:1px solid var(--hobis-border); position:relative; overflow:hidden;">
-                <iframe src="cf252-hotcell-3d.html" style="width:200%; height:200%; transform:scale(0.5); transform-origin:top left; border:none; pointer-events:none;" loading="lazy"></iframe>
+                <iframe src="${htmlFile}" style="width:200%; height:200%; transform:scale(0.5); transform-origin:top left; border:none; pointer-events:none;" loading="lazy"></iframe>
                 <div style="position:absolute;inset:0;background:linear-gradient(transparent 60%, rgba(13,17,23,0.7));pointer-events:none;"></div>
             </div>
             <div style="text-align:center; font-size:0.7rem; color:#5f7481; padding:4px;">클릭하여 인터랙티브 3D 뷰어 열기</div>
-        </div>
+        </div>`;
+        })()}
 
         <div class="cf252-constants-section">
             <div class="header" style="border:none; font-size:0.85rem;">APPLIED CONSTANTS</div>
@@ -1586,16 +1596,37 @@ function cf252CloseOverlay() {
 
 // === 3D 핫셀 뷰어 오버레이 (인터랙티브 구조 변형 + 실시간 선량평가) ===
 
-function _cf252SliderWithInput(id, label, min, max, step, value, unit) {
+function _cf252SliderWithInput(id, label, min, max, step, value, unit, recalcFn) {
+    const syncSliderFn = recalcFn ? `cf252SyncSliderGeneric('${id}','${recalcFn}')` : `cf252Sync3DSlider('${id}')`;
+    const syncInputFn = recalcFn ? `cf252SyncInputGeneric('${id}','${recalcFn}')` : `cf252Sync3DInput('${id}')`;
     return `
         <div class="cf252-ov-slider-group">
             <label>${label}</label>
             <div style="display:flex; gap:6px; align-items:center;">
-                <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${value}" style="flex:1;" oninput="cf252Sync3DSlider('${id}')">
-                <input type="number" id="${id}Num" min="${min}" max="${max}" step="${step}" value="${value}" style="width:60px; background:var(--hobis-panel); color:var(--hobis-green); border:1px solid var(--hobis-border); padding:2px 4px; font-size:11px; text-align:right; font-family:monospace;" oninput="cf252Sync3DInput('${id}')">
+                <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${value}" style="flex:1;" oninput="${syncSliderFn}">
+                <input type="number" id="${id}Num" min="${min}" max="${max}" step="${step}" value="${value}" style="width:60px; background:var(--hobis-panel); color:var(--hobis-green); border:1px solid var(--hobis-border); padding:2px 4px; font-size:11px; text-align:right; font-family:monospace;" oninput="${syncInputFn}">
                 <span style="font-size:10px; color:#5f7481; min-width:20px;">${unit}</span>
             </div>
         </div>`;
+}
+
+function cf252SyncSliderGeneric(id, recalcFn) {
+    const slider = document.getElementById(id);
+    const numInput = document.getElementById(id + 'Num');
+    if (slider && numInput) numInput.value = slider.value;
+    if (typeof window[recalcFn] === 'function') window[recalcFn]();
+}
+
+function cf252SyncInputGeneric(id, recalcFn) {
+    const slider = document.getElementById(id);
+    const numInput = document.getElementById(id + 'Num');
+    if (slider && numInput) {
+        let v = parseFloat(numInput.value);
+        if (isNaN(v)) return;
+        v = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), v));
+        slider.value = v;
+    }
+    if (typeof window[recalcFn] === 'function') window[recalcFn]();
 }
 
 function cf252Sync3DSlider(id) {
@@ -1790,6 +1821,170 @@ function cf252Ov3DRecalculate() {
 }
 
 function cf252Close3DOverlay() {
+    const ov = document.getElementById('cf252-3d-overlay');
+    if (!ov) return;
+    if (ov._keyHandler) document.removeEventListener('keydown', ov._keyHandler);
+    if (ov._msgHandler) window.removeEventListener('message', ov._msgHandler);
+    ov.classList.remove('cf252-ov-visible');
+    setTimeout(() => ov.remove(), 200);
+}
+
+// === 콘크리트 핫셀 3D 오버레이 ===
+function cf252OpenConcrete3DOverlay() {
+    let ov = document.getElementById('cf252-3d-overlay');
+    if (ov) ov.remove();
+
+    ov = document.createElement('div');
+    ov.id = 'cf252-3d-overlay';
+    ov.className = 'cf252-overlay';
+
+    const controlsHTML = `
+        <div class="cf252-3d-controls">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <span style="font-family:'Orbitron',sans-serif; color:var(--hobis-warn); font-size:0.85rem;">콘크리트 핫셀 설계</span>
+                <button onclick="cf252CloseConcrete3DOverlay()" style="background:none; color:var(--hobis-alert); border:1px solid var(--hobis-alert); padding:2px 8px; cursor:pointer; font-size:12px;">✕</button>
+            </div>
+
+            <h3 style="font-size:0.75rem; color:var(--hobis-cyan); margin:10px 0 6px; border-bottom:1px solid var(--hobis-border); padding-bottom:3px;">차폐 구조</h3>
+            ${_cf252SliderWithInput('cf252OvConc_wallDP134', '벽 DP1,3,4 (콘크리트)', 30, 200, 5, 120, 'cm', 'cf252OvConcRecalculate')}
+            ${_cf252SliderWithInput('cf252OvConc_wallDP2', '벽 DP2 (콘크리트)', 30, 200, 5, 135, 'cm', 'cf252OvConcRecalculate')}
+            ${_cf252SliderWithInput('cf252OvConc_ceilT', '천장 (콘크리트)', 20, 150, 5, 60, 'cm', 'cf252OvConcRecalculate')}
+
+            <h3 style="font-size:0.75rem; color:var(--hobis-cyan); margin:10px 0 6px; border-bottom:1px solid var(--hobis-border); padding-bottom:3px;">내부 치수</h3>
+            ${_cf252SliderWithInput('cf252OvConc_innerW', '폭', 100, 400, 5, 265, 'cm', 'cf252OvConcRecalculate')}
+            ${_cf252SliderWithInput('cf252OvConc_innerD', '깊이', 100, 300, 5, 180, 'cm', 'cf252OvConcRecalculate')}
+            ${_cf252SliderWithInput('cf252OvConc_innerH', '높이', 200, 600, 5, 455, 'cm', 'cf252OvConcRecalculate')}
+
+            <h3 style="font-size:0.75rem; color:var(--hobis-cyan); margin:10px 0 6px; border-bottom:1px solid var(--hobis-border); padding-bottom:3px;">선원</h3>
+            <div class="cf252-ov-slider-group">
+                <label>방사능</label>
+                <select id="cf252OvConc_act" style="width:100%; background:var(--hobis-panel); color:var(--hobis-green); border:1px solid var(--hobis-border); padding:4px; font-size:11px;" onchange="cf252OvConcRecalculate()">
+                    <option value="54">54 mCi (STC-100 × 1)</option>
+                    <option value="2700" selected>2,700 mCi (2.7 Ci)</option>
+                </select>
+            </div>
+
+            <h3 style="font-size:0.75rem; color:var(--hobis-cyan); margin:10px 0 6px; border-bottom:1px solid var(--hobis-border); padding-bottom:3px;">실시간 선량 평가</h3>
+            <div style="font-size:10px; color:#5f7481; margin-bottom:6px;">관리구역 내부 ≤ 25 μSv/h</div>
+            <div id="cf252OvConc_doseResult"></div>
+
+            <h3 style="font-size:0.75rem; color:var(--hobis-cyan); margin:10px 0 6px; border-bottom:1px solid var(--hobis-border); padding-bottom:3px;">구조 제원</h3>
+            <div id="cf252OvConc_specs" style="font-size:11px;"></div>
+        </div>`;
+
+    ov.innerHTML = `
+        <div class="cf252-ov-content cf252-3d-enhanced">
+            <div class="cf252-3d-viewer">
+                <iframe id="cf252-conc-3d-iframe" src="cf252-hotcell-concrete-3d.html" style="width:100%; height:100%; border:none;"></iframe>
+            </div>
+            ${controlsHTML}
+        </div>`;
+
+    document.body.appendChild(ov);
+
+    ov.addEventListener('click', (e) => { if (e.target === ov) cf252CloseConcrete3DOverlay(); });
+    ov._keyHandler = (e) => { if (e.key === 'Escape') cf252CloseConcrete3DOverlay(); };
+    document.addEventListener('keydown', ov._keyHandler);
+
+    ov._msgHandler = (event) => {
+        const msg = event.data;
+        if (!msg || !msg.type) return;
+        if (msg.type === 'ready') {
+            const iframe = document.getElementById('cf252-conc-3d-iframe');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage({ type: 'setEmbeddedMode' }, '*');
+            }
+            cf252OvConcRecalculate();
+        }
+    };
+    window.addEventListener('message', ov._msgHandler);
+
+    setTimeout(() => cf252OvConcRecalculate(), 100);
+    setTimeout(() => ov.classList.add('cf252-ov-visible'), 30);
+}
+
+function cf252OvConcRecalculate() {
+    const _v = (id, def) => { const v = parseFloat(document.getElementById(id)?.value); return isNaN(v) ? def : v; };
+    const wallDP134 = _v('cf252OvConc_wallDP134', 120);
+    const wallDP2 = _v('cf252OvConc_wallDP2', 135);
+    const ceilT = _v('cf252OvConc_ceilT', 60);
+    const innerW = _v('cf252OvConc_innerW', 265);
+    const innerD = _v('cf252OvConc_innerD', 180);
+    const innerH = _v('cf252OvConc_innerH', 455);
+    const act = _v('cf252OvConc_act', 2700);
+
+    // iframe에 파라미터 전송
+    const iframe = document.getElementById('cf252-conc-3d-iframe');
+    if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+            type: 'updateParams',
+            params: { innerW, innerD, innerH, wallDP134, wallDP2, ceilT }
+        }, '*');
+    }
+
+    // 3개 평가 시나리오
+    const scenarios = [
+        {
+            name: 'DP1,3,4 (콘크리트 ' + wallDP134 + 'cm)',
+            dist: innerW / 2 + wallDP134 + 10,
+            shields: [{ material: 'Concrete', thickness_cm: wallDP134 }],
+        },
+        {
+            name: 'DP2 (콘크리트 ' + wallDP2 + 'cm)',
+            dist: innerD / 2 + wallDP2 + 10,
+            shields: [{ material: 'Concrete', thickness_cm: wallDP2 }],
+        },
+        {
+            name: '천장 (콘크리트 ' + ceilT + 'cm)',
+            dist: innerH + ceilT + 10,
+            shields: [{ material: 'Concrete', thickness_cm: ceilT }],
+        },
+    ];
+
+    const limit = 25;
+    let tableHTML = '<table style="width:100%; border-collapse:collapse; font-size:11px;">';
+    tableHTML += '<tr style="border-bottom:1px solid var(--hobis-border);"><th style="text-align:left; padding:3px; color:var(--hobis-cyan);">위치</th><th style="text-align:right; padding:3px; color:var(--hobis-cyan);">γ</th><th style="text-align:right; padding:3px; color:var(--hobis-cyan);">n</th><th style="text-align:right; padding:3px; color:var(--hobis-cyan);">합계</th><th style="padding:3px;"></th></tr>';
+
+    scenarios.forEach(s => {
+        const g = cf252GammaDoseRate(act, s.dist, s.shields) * 1000;
+        const n = cf252NeutronDoseRate(act, s.dist, s.shields) * 1000;
+        const total = g + n;
+        const pass = total <= limit;
+        const cls = pass ? 'color:var(--hobis-green)' : 'color:var(--hobis-alert)';
+        const icon = pass ? '✓' : '✗';
+        tableHTML += `<tr style="border-bottom:1px solid #1a2530;">
+            <td style="padding:3px;">${s.name}</td>
+            <td style="text-align:right; padding:3px; font-family:monospace;">${cf252Fmt(g)}</td>
+            <td style="text-align:right; padding:3px; font-family:monospace;">${cf252Fmt(n)}</td>
+            <td style="text-align:right; padding:3px; font-family:monospace; font-weight:bold; ${cls}">${cf252Fmt(total)}</td>
+            <td style="padding:3px; ${cls}; font-weight:bold;">${icon}</td>
+        </tr>`;
+    });
+    tableHTML += '</table>';
+
+    const doseDiv = document.getElementById('cf252OvConc_doseResult');
+    if (doseDiv) doseDiv.innerHTML = tableHTML;
+
+    // 구조 제원
+    const outerW = innerW + wallDP134 * 2;
+    const outerD = innerD + wallDP134 + wallDP2;
+    const outerH = innerH + ceilT + 30; // floorT=30
+    const wallVol = 2 * (wallDP134 * innerH * innerD) + (wallDP134 * innerH * innerW) + (wallDP2 * innerH * innerW);
+    const ceilVol = outerW * outerD * ceilT;
+    const floorVol = outerW * outerD * 30;
+    const totalVolM3 = (wallVol + ceilVol + floorVol) / 1e6;
+    const concreteKg = Math.round(totalVolM3 * 2400);
+
+    const specsDiv = document.getElementById('cf252OvConc_specs');
+    if (specsDiv) {
+        specsDiv.innerHTML = `
+            <div style="display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px dotted #1a2530;"><span style="color:#5f7481;">외부 치수</span><span style="color:var(--hobis-green); font-family:monospace;">${outerW} × ${outerD} × ${outerH} cm</span></div>
+            <div style="display:flex; justify-content:space-between; padding:2px 0; border-bottom:1px dotted #1a2530;"><span style="color:#5f7481;">콘크리트 체적</span><span style="color:var(--hobis-green); font-family:monospace;">≈ ${totalVolM3.toFixed(1)} m³</span></div>
+            <div style="display:flex; justify-content:space-between; padding:2px 0;"><span style="color:#5f7481;">콘크리트 중량</span><span style="color:var(--hobis-warn); font-family:monospace;">≈ ${concreteKg.toLocaleString()} kg</span></div>`;
+    }
+}
+
+function cf252CloseConcrete3DOverlay() {
     const ov = document.getElementById('cf252-3d-overlay');
     if (!ov) return;
     if (ov._keyHandler) document.removeEventListener('keydown', ov._keyHandler);
