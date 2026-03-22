@@ -560,10 +560,58 @@ function animate() {
     labelRenderer.render(scene, camera);
 }
 
+// === POSTMESSAGE API (for parent iframe communication) ===
+const isEmbedded = window.parent !== window;
+
+window.addEventListener('message', (event) => {
+    const msg = event.data;
+    if (!msg || !msg.type) return;
+
+    if (msg.type === 'updateParams') {
+        const p = msg.params;
+        if (p.innerW !== undefined) HC.innerW = p.innerW;
+        if (p.innerD !== undefined) HC.innerD = p.innerD;
+        if (p.innerH !== undefined) HC.innerH = p.innerH;
+        if (p.waterT !== undefined) HC.waterT = p.waterT;
+        if (p.leadT !== undefined) HC.leadT = p.leadT;
+        if (p.leadGlassT !== undefined) HC.leadGlassT = p.leadGlassT;
+        // Recalculate derived dimensions
+        HC.outerW = HC.innerW + (HC.waterT + HC.leadT) * 2;
+        HC.outerD = HC.innerD + HC.waterT + HC.leadT + HC.waterT + HC.leadGlassT;
+        HC.outerH = HC.innerH + HC.waterT + HC.leadT + HC.baseH;
+        buildHotCell();
+        updateDose();
+        if (isEmbedded) {
+            parent.postMessage({ type: 'paramsUpdated', params: { ...HC } }, '*');
+        }
+    }
+
+    if (msg.type === 'setEmbeddedMode') {
+        const hud = document.getElementById('hud');
+        const infoBar = document.getElementById('info-bar');
+        if (hud) hud.style.display = 'none';
+        if (infoBar) infoBar.style.display = 'none';
+        // Resize to fill without HUD
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        labelRenderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    if (msg.type === 'getParams') {
+        parent.postMessage({ type: 'params', params: { ...HC } }, '*');
+    }
+});
+
 // === INIT ===
 buildHotCell();
 updateDose();
 animate();
+
+// Notify parent when ready
+if (isEmbedded) {
+    parent.postMessage({ type: 'ready', params: { ...HC } }, '*');
+}
 
 window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
