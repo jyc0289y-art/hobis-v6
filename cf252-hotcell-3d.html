@@ -90,6 +90,10 @@ body { background:#0a0a0c; color:#c0d0d8; font-family:'Segoe UI',sans-serif; ove
         <div class="btn-toggle active" id="btnDosePoints" onclick="toggleDosePoints(this)">평가점 표시</div>
         <div class="btn-toggle" id="btnCutaway" onclick="toggleCutaway(this)">단면 보기</div>
     </div>
+    <div class="btn-row">
+        <div class="btn-toggle active" id="btnHuman" onclick="toggleHuman(this)">사람 모델</div>
+        <div class="btn-toggle active" id="btnDimLines" onclick="toggleDimLines(this)">치수선</div>
+    </div>
     <div class="ctrl">
         <label>수조 투명도</label>
         <input type="range" id="waterOpacity" min="0.05" max="0.6" step="0.05" value="0.3" oninput="updateOpacity()">
@@ -216,9 +220,13 @@ const matFloor = new THREE.MeshStandardMaterial({
 const hotcellGroup = new THREE.Group();
 const labelsGroup = new THREE.Group();
 const dosePointsGroup = new THREE.Group();
+const humanGroup = new THREE.Group();
+const dimLinesGroup = new THREE.Group();
 scene.add(hotcellGroup);
 scene.add(labelsGroup);
 scene.add(dosePointsGroup);
+scene.add(humanGroup);
+scene.add(dimLinesGroup);
 
 // === FLOOR ===
 const floorGeo = new THREE.PlaneGeometry(800, 800);
@@ -392,6 +400,12 @@ function buildHotCell() {
 
     // === LABELS ===
     buildLabels(yFloor);
+
+    // === HUMAN FIGURE ===
+    buildHumanFigure();
+
+    // === DIMENSION LINES ===
+    buildDimLines();
 }
 
 function buildDosePoints(yFloor) {
@@ -449,6 +463,206 @@ function buildLabels(yFloor) {
         lbl.position.set(d.pos[0], d.pos[1], d.pos[2]);
         labelsGroup.add(lbl);
     });
+}
+
+// === HUMAN FIGURE (175cm tall, stylized) ===
+function buildHumanFigure() {
+    while(humanGroup.children.length) humanGroup.remove(humanGroup.children[0]);
+
+    const matSkin = new THREE.MeshStandardMaterial({ color: 0xd4a574, roughness: 0.8 });
+    const matCloth = new THREE.MeshStandardMaterial({ color: 0x2255aa, roughness: 0.7 });
+    const matShoe = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.9 });
+    const matHair = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 });
+
+    const h = 175; // 175cm total height
+    const person = new THREE.Group();
+
+    // Head (sphere)
+    const head = new THREE.Mesh(new THREE.SphereGeometry(10*S, 12, 10), matSkin);
+    head.position.y = (h - 10)*S;
+    person.add(head);
+
+    // Hair (slightly larger half-sphere on top)
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(10.5*S, 12, 6, 0, Math.PI*2, 0, Math.PI/2), matHair);
+    hair.position.y = (h - 10)*S;
+    person.add(hair);
+
+    // Neck
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(4*S, 5*S, 8*S, 8), matSkin);
+    neck.position.y = (h - 24)*S;
+    person.add(neck);
+
+    // Torso (tapered cylinder)
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(14*S, 12*S, 50*S, 8), matCloth);
+    torso.position.y = (h - 53)*S;
+    person.add(torso);
+
+    // Arms (cylinders)
+    [-1, 1].forEach(side => {
+        // Upper arm
+        const upperArm = new THREE.Mesh(new THREE.CylinderGeometry(4*S, 3.5*S, 30*S, 6), matCloth);
+        upperArm.position.set(side * 18*S, (h - 43)*S, 0);
+        upperArm.rotation.z = side * 0.15;
+        person.add(upperArm);
+        // Lower arm
+        const lowerArm = new THREE.Mesh(new THREE.CylinderGeometry(3.5*S, 3*S, 28*S, 6), matSkin);
+        lowerArm.position.set(side * 20*S, (h - 73)*S, 0);
+        lowerArm.rotation.z = side * 0.1;
+        person.add(lowerArm);
+        // Hand
+        const hand = new THREE.Mesh(new THREE.SphereGeometry(4*S, 6, 6), matSkin);
+        hand.position.set(side * 21*S, (h - 89)*S, 0);
+        person.add(hand);
+    });
+
+    // Legs (cylinders)
+    [-1, 1].forEach(side => {
+        // Upper leg
+        const upperLeg = new THREE.Mesh(new THREE.CylinderGeometry(6*S, 5*S, 42*S, 6), matCloth);
+        upperLeg.position.set(side * 7*S, (h - 99)*S, 0);
+        person.add(upperLeg);
+        // Lower leg
+        const lowerLeg = new THREE.Mesh(new THREE.CylinderGeometry(5*S, 4*S, 40*S, 6), matCloth);
+        lowerLeg.position.set(side * 7*S, (h - 141)*S, 0);
+        person.add(lowerLeg);
+        // Shoe
+        const shoe = new THREE.Mesh(new THREE.BoxGeometry(10*S, 6*S, 16*S), matShoe);
+        shoe.position.set(side * 7*S, 3*S, 3*S);
+        person.add(shoe);
+    });
+
+    // Height label
+    const heightLbl = makeLabel('175 cm', '#ffcc00');
+    heightLbl.position.set(0, (h + 8)*S, 0);
+    person.add(heightLbl);
+
+    // Position person next to hot cell (right-front)
+    const oW = HC.innerW + (HC.waterT + HC.leadT) * 2;
+    const oD = HC.innerD + HC.waterT + HC.leadT + HC.waterT + HC.leadGlassT;
+    person.position.set((oW/2 + 40)*S, 0, (oD/2 + 30)*S);
+    person.castShadow = true;
+
+    humanGroup.add(person);
+}
+
+// === DIMENSION LINES (치수선) ===
+function buildDimLines() {
+    while(dimLinesGroup.children.length) dimLinesGroup.remove(dimLinesGroup.children[0]);
+
+    const iW = HC.innerW, iD = HC.innerD, iH = HC.innerH;
+    const wT = HC.waterT, lT = HC.leadT, lgT = HC.leadGlassT;
+    const bH = HC.baseH;
+    const yFloor = bH + lT;
+    const oW = iW + (wT + lT) * 2;
+    const oD = iD + wT + lT + wT + lgT;
+    const oH = iH + wT + lT + bH;
+
+    const dimColor = 0xffcc00;
+    const dimMat = new THREE.LineBasicMaterial({ color: dimColor, transparent: true, opacity: 0.8 });
+    const tickMat = new THREE.LineBasicMaterial({ color: dimColor });
+
+    function addDimLine(p1, p2, label, offset, axis) {
+        // offset direction: perpendicular to measurement axis
+        const o1 = p1.clone().add(offset);
+        const o2 = p2.clone().add(offset);
+
+        // Extension lines (from object to dimension line)
+        const ext1 = [p1, o1];
+        const ext2 = [p2, o2];
+
+        // Dimension line
+        const dim = [o1, o2];
+
+        // Tick marks at ends
+        const tickLen = 5 * S;
+        const tickDir = new THREE.Vector3().subVectors(o2, o1).normalize();
+        const tickPerp = offset.clone().normalize().multiplyScalar(tickLen);
+
+        [ext1, ext2, dim].forEach(pts => {
+            const geo = new THREE.BufferGeometry().setFromPoints(pts);
+            const line = new THREE.Line(geo, dimMat);
+            dimLinesGroup.add(line);
+        });
+
+        // Arrow ticks at dimension line ends
+        const arrowSize = 4 * S;
+        [o1, o2].forEach((pt, i) => {
+            const dir = i === 0 ? tickDir : tickDir.clone().negate();
+            const tip = pt.clone();
+            const a1 = tip.clone().add(dir.clone().multiplyScalar(arrowSize)).add(tickPerp.clone().multiplyScalar(0.5));
+            const a2 = tip.clone().add(dir.clone().multiplyScalar(arrowSize)).add(tickPerp.clone().multiplyScalar(-0.5));
+            const arrowGeo = new THREE.BufferGeometry().setFromPoints([a1, tip, a2]);
+            dimLinesGroup.add(new THREE.Line(arrowGeo, tickMat));
+        });
+
+        // Label at midpoint
+        const mid = o1.clone().add(o2).multiplyScalar(0.5);
+        const lbl = makeLabel(label, '#ffcc00');
+        lbl.position.copy(mid);
+        dimLinesGroup.add(lbl);
+    }
+
+    // === OUTER WIDTH ===
+    addDimLine(
+        new THREE.Vector3(-oW/2*S, 0, -(oD/2 + 20)*S),
+        new THREE.Vector3(oW/2*S, 0, -(oD/2 + 20)*S),
+        `${oW} cm (외폭)`,
+        new THREE.Vector3(0, 0, -25*S),
+        'x'
+    );
+
+    // === OUTER DEPTH ===
+    addDimLine(
+        new THREE.Vector3((oW/2 + 20)*S, 0, -oD/2*S),
+        new THREE.Vector3((oW/2 + 20)*S, 0, oD/2*S),
+        `${oD} cm (외깊이)`,
+        new THREE.Vector3(25*S, 0, 0),
+        'z'
+    );
+
+    // === OUTER HEIGHT ===
+    addDimLine(
+        new THREE.Vector3(-(oW/2 + 20)*S, 0, -(oD/2 + 20)*S),
+        new THREE.Vector3(-(oW/2 + 20)*S, oH*S, -(oD/2 + 20)*S),
+        `${oH} cm (외높이)`,
+        new THREE.Vector3(-25*S, 0, -15*S),
+        'y'
+    );
+
+    // === INNER WIDTH ===
+    addDimLine(
+        new THREE.Vector3(-iW/2*S, yFloor*S, (iD/2 + wT + lgT + 10)*S),
+        new THREE.Vector3(iW/2*S, yFloor*S, (iD/2 + wT + lgT + 10)*S),
+        `${iW} cm (내폭)`,
+        new THREE.Vector3(0, -12*S, 10*S),
+        'x'
+    );
+
+    // === WALL THICKNESS (water + lead) — left wall breakdown ===
+    const wallX = -(iW/2)*S;
+    addDimLine(
+        new THREE.Vector3(wallX, (yFloor + iH + 15)*S, 0),
+        new THREE.Vector3((wallX - wT*S), (yFloor + iH + 15)*S, 0),
+        `물 ${wT}`,
+        new THREE.Vector3(0, 15*S, 0),
+        'x'
+    );
+    addDimLine(
+        new THREE.Vector3((wallX - wT*S), (yFloor + iH + 15)*S, 0),
+        new THREE.Vector3((wallX - wT*S - lT*S), (yFloor + iH + 15)*S, 0),
+        `납 ${lT}`,
+        new THREE.Vector3(0, 30*S, 0),
+        'x'
+    );
+
+    // === INNER HEIGHT ===
+    addDimLine(
+        new THREE.Vector3((iW/2 + 5)*S, yFloor*S, (iD/2 + wT + lgT + 20)*S),
+        new THREE.Vector3((iW/2 + 5)*S, (yFloor + iH)*S, (iD/2 + wT + lgT + 20)*S),
+        `${iH} cm (내높이)`,
+        new THREE.Vector3(15*S, 0, 10*S),
+        'y'
+    );
 }
 
 function makeLabel(text, color) {
@@ -521,6 +735,14 @@ window.toggleLabels = (el) => {
 window.toggleDosePoints = (el) => {
     el.classList.toggle('active');
     dosePointsGroup.visible = el.classList.contains('active');
+};
+window.toggleHuman = (el) => {
+    el.classList.toggle('active');
+    humanGroup.visible = el.classList.contains('active');
+};
+window.toggleDimLines = (el) => {
+    el.classList.toggle('active');
+    dimLinesGroup.visible = el.classList.contains('active');
 };
 
 let cutawayMode = false;
