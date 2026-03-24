@@ -44,7 +44,7 @@ function renderInputs() {
                 <div id="sourceList"></div>
             </div>
             <div class="grid-row"><div><label>Distance(m)</label><input type="number" id="inDist" value="1"></div></div>
-            <div style="margin:15px 0;"><div class="header" style="border:none;"><span>LAYERS</span> <button class="btn-outline" onclick="addLayerRow()">+ ADD</button></div><div id="layerList"></div></div>
+            <div style="margin:15px 0;"><div class="header" style="border:none;"><span>LAYERS</span> <button class="btn-outline" onclick="addLayerRow()">+ ADD</button></div><div style="margin-bottom:8px;"><select id="shieldPresetSelect" onchange="loadShieldPreset()" style="font-size:0.75rem; padding:3px 6px; background:var(--hobis-panel); color:var(--hobis-cyan); border:1px solid var(--hobis-border);">${SHIELD_PRESETS.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}</select></div><div id="layerList"></div></div>
             <div class="grid-row"><div><label>Out Type</label><select id="outType" onchange="updateOutUnit()"><option value="dose">Dose Rate</option><option value="act">Eff. Activity</option></select></div><div><label>Out Unit</label><select id="outUnit">${getUnitOpts('dose')}</select></div></div>`;
         addSourceRow();
         addLayerRow();
@@ -71,7 +71,7 @@ function renderInputs() {
                 <div><label>Target Val</label><div class="input-group"><input type="number" id="targetVal"><select id="targetUnit">${getUnitOpts('dose')}</select></div></div>
             </div>
             <div class="grid-row">
-                <div><label>Material</label><select id="targetMat"><option value="Lead">Lead</option><option value="LeadGlass">Lead Glass</option><option value="Concrete">Concrete</option><option value="Steel">Steel</option><option value="Tungsten">W</option><option value="DU">DU</option></select></div>
+                <div><label>Material</label><select id="targetMat">${SHIELD_MAT_OPTIONS}</select></div>
             </div>`;
         updateRowSpec(document.getElementById('nucSelect'));
     }
@@ -91,10 +91,37 @@ function addSourceRow() {
     updateRowSpec(div.querySelector('.src-select'));
 }
 
-function addLayerRow() {
+const SHIELD_MAT_OPTIONS = '<option value="Lead">Lead</option><option value="LeadGlass">Lead Glass</option><option value="Concrete">Concrete</option><option value="Steel">Steel</option><option value="Water">Water</option><option value="Polyethylene">Polyethylene</option><option value="Paraffin">Paraffin</option><option value="Tungsten">W</option><option value="DU">DU</option>';
+
+// 차폐 프리셋 (다층 구성)
+const SHIELD_PRESETS = [
+    { id: '', name: '-- 프리셋 선택 --', layers: [] },
+    { id: 'water_pb', name: '물 + 납 (n+γ)', layers: [{ m: 'Water', t: 300 }, { m: 'Lead', t: 50 }], ref: 'Cf-252 복합차폐 기본구성' },
+    { id: 'paraffin_pb', name: '파라핀 + 납 (n+γ)', layers: [{ m: 'Paraffin', t: 80 }, { m: 'Lead', t: 50 }], ref: '파라핀(n감속)+납(γ차폐)' },
+    { id: 'pe_pb', name: '폴리에틸렌 + 납 (n+γ)', layers: [{ m: 'Polyethylene', t: 80 }, { m: 'Lead', t: 50 }], ref: 'PE(n감속)+납(γ차폐), Alizadeh Rahvar 2020' },
+    { id: 'concrete', name: '콘크리트 단일', layers: [{ m: 'Concrete', t: 1200 }], ref: '콘크리트 벽체' },
+    { id: 'pb_only', name: '납 단일 (γ)', layers: [{ m: 'Lead', t: 50 }], ref: '감마선 전용' },
+];
+
+function loadShieldPreset() {
+    const sel = document.getElementById('shieldPresetSelect');
+    if (!sel || !sel.value) return;
+    const preset = SHIELD_PRESETS.find(p => p.id === sel.value);
+    if (!preset || preset.layers.length === 0) return;
+
+    const layerList = document.getElementById('layerList');
+    layerList.innerHTML = '';
+    preset.layers.forEach(l => {
+        addLayerRow(l.m, l.t);
+    });
+}
+
+function addLayerRow(defaultMat, defaultThk) {
     const div = document.createElement('div');
     div.className = 'list-item shield-layer';
-    div.innerHTML = `<div class="del-btn" onclick="this.parentElement.remove()">×</div><div class="grid-row" style="margin:0; gap:5px;"><div style="flex:1"><select class="mat-select"><option value="Lead">Lead</option><option value="LeadGlass">Lead Glass</option><option value="Concrete">Concrete</option><option value="Steel">Steel</option><option value="Tungsten">W</option><option value="DU">DU</option></select></div><div style="flex:1"><input type="number" class="thk-input" placeholder="mm"></div></div>`;
+    let matOpts = SHIELD_MAT_OPTIONS;
+    if (defaultMat) matOpts = matOpts.replace(`value="${defaultMat}"`, `value="${defaultMat}" selected`);
+    div.innerHTML = `<div class="del-btn" onclick="this.parentElement.remove()">×</div><div class="grid-row" style="margin:0; gap:5px;"><div style="flex:1"><select class="mat-select">${matOpts}</select></div><div style="flex:1"><input type="number" class="thk-input" placeholder="mm" ${defaultThk ? `value="${defaultThk}"` : ''}></div></div>`;
     document.getElementById('layerList').appendChild(div);
 }
 

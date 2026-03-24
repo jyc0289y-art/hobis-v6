@@ -42,20 +42,23 @@ const CF252 = {
         return pSv_per_s * 3600 * 1e-9; // mSv·cm²/(mCi·h)
     },
 
-    // === HVL 값 (cm) — 6차 보완 최종 채택 + RT룸 재료 확장 ===
+    // === HVL 값 (cm) — Alizadeh Rahvar et al., IJRR 18(2):381-387, 2020 (MCNPX) ===
+    // + 보고서 REV13 채택값 + RT룸 재료 확장
     HVL_GAMMA: {
-        'Pb': 0.82,
-        'Concrete': 5.03,
+        'Pb': 0.82,          // Table 2: simul. n+γ, photon scored = 0.82cm
+        'Concrete': 5.03,    // Table 2: simul. n+γ, photon scored = 5.03cm
         'Water': 10.0,       // μ/ρ≈0.0707 cm²/g @1MeV, ρ=1.0 → HVL≈9.8cm (보수적 10cm)
         'Paraffin': 11.0,    // μ/ρ≈0.065 cm²/g @1MeV, ρ=0.9 → HVL≈11cm
+        'PE': 10.6,          // μ/ρ≈0.0707 cm²/g @1MeV, ρ=0.94 → HVL≈10.6cm
     },
     HVL_NEUTRON: {
-        'PE': 1.85,
-        'Pb': 3.45,
-        'Concrete': 3.03,
-        'Water': 2.3,        // H밀도 6.69e22/cm³ (PE 대비 0.82배) → HVL≈1.85/0.82≈2.3cm
+        'PE': 1.85,          // Table 2: separate neutron = 1.85cm
+        'Pb': 3.45,          // Table 2: simul. n+γ, neutron scored = 3.45cm
+        'Concrete': 3.03,    // Table 2: separate neutron = 3.03cm
+        'Water': 2.16,       // Table 2: separate neutron = 2.16cm
         'Paraffin': 1.9,     // H밀도 8.0e22/cm³ (PE와 유사) → HVL≈1.9cm
     },
+    HVL_REF: 'Alizadeh Rahvar et al., IJRR 18(2):381-387, 2020',
 
     // === 방사화 관련 (Al-27 → Al-28) ===
     AL28_HALF_LIFE_S: 134.5,

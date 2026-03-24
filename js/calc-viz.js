@@ -24,6 +24,9 @@ function shieldGenerateSVG(sources, layers, options = {}) {
         'Tungsten': { fill: '#7a7a7a', stroke: '#aaaaaa', label: 'W' },
         'DU': { fill: '#5a8a5a', stroke: '#7aba7a', label: 'DU' },
         'LeadGlass': { fill: '#4a6a8a', stroke: '#7ab0d0', label: 'PbGlass' },
+        'Water': { fill: '#2a5a8a', stroke: '#4a9aee', label: 'H₂O' },
+        'Polyethylene': { fill: '#6a6a3a', stroke: '#b0b060', label: 'PE' },
+        'Paraffin': { fill: '#8a7a4a', stroke: '#d0c070', label: 'Wax' },
     };
 
     const src = sources[0] || { value: 0, distance_m: 1 };
@@ -89,6 +92,20 @@ function shieldGenerateSVG(sources, layers, options = {}) {
         } else if (layer.material === 'Steel' || layer.material === 'Tungsten') {
             for (let hy = y + 5; hy < y + layerH - 5; hy += 6) {
                 svg += `<line x1="${shieldX+2}" y1="${hy}" x2="${shieldX+layerW-2}" y2="${hy}" stroke="${mc.stroke}" stroke-width="0.4" opacity="0.3"/>`;
+            }
+        } else if (layer.material === 'Water') {
+            // 물결 패턴
+            for (let hy = y + 8; hy < y + layerH - 5; hy += 10) {
+                let wave = `M ${shieldX+3} ${hy}`;
+                for (let wx = 0; wx < layerW - 6; wx += 12) {
+                    wave += ` q 3 -4 6 0 q 3 4 6 0`;
+                }
+                svg += `<path d="${wave}" fill="none" stroke="${mc.stroke}" stroke-width="0.6" opacity="0.35"/>`;
+            }
+        } else if (layer.material === 'Polyethylene' || layer.material === 'Paraffin') {
+            // 점선 패턴
+            for (let hy = y + 6; hy < y + layerH - 5; hy += 8) {
+                svg += `<line x1="${shieldX+3}" y1="${hy}" x2="${shieldX+layerW-3}" y2="${hy}" stroke="${mc.stroke}" stroke-width="0.5" opacity="0.3" stroke-dasharray="3,4"/>`;
             }
         }
 

@@ -1,6 +1,8 @@
 // --- HOBIS CHART MODULE ---
 // Graph rendering (V4.5 SPEC: clean line + points on hover)
 
+let myChart = null;
+
 function drawChart(L, D, lbl, xl, mx, my, startDate) {
     if (myChart) myChart.destroy();
     const ctx = document.getElementById('opsChart').getContext('2d');

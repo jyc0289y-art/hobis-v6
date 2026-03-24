@@ -1,14 +1,18 @@
-/* HOBIS DATABASE MODULE v3.4
+/* HOBIS DATABASE MODULE v3.5
    파일명: hobis_db.js
-   
+
    [데이터 검증 소스]
    1. QSA: QSA Global MAN-027 (Revision Sep 2022)
       - Table 6: Source Output (R/hr/Ci @ 1m) -> mSv 변환 (x10)
       - Table 7: Approximate Half Value Thickness (Inches/mm)
    2. ICRP107: Smith & Stabin (2012)
-   
+   3. NIST XCOM: Photon Cross Sections Database (gamma HVL for Water/PE/Paraffin)
+   4. Alizadeh Rahvar et al., Int. J. Radiat. Res., 18(2):381-387, 2020
+      - Cf-252 HVL (MCNPX): Lead γ=7.7mm, Concrete γ=48mm,
+        PE n=18.5mm, Water n=21.6mm
+
    [단위]
-   - Gamma: mSv·m²/h·Ci 
+   - Gamma: mSv·m²/h·Ci
    - HVL: mm
    - HL: d(Days), y(Years)
 */
@@ -16,8 +20,8 @@
 const GLOBAL_DB = {
     // [1] QSA Global (MAN-027 Table 6 & 7 Strict Compliance)
     "QSA": [
-        { 
-            id: "Ir-192", 
+        {
+            id: "Ir-192",
             hl: 74, unit: "d",    // Manual 1.3: 74 days
             gamma: 4.80,          // Manual Table 6: 0.48 R -> 4.8 mSv
             hvl: {
@@ -26,7 +30,10 @@ const GLOBAL_DB = {
                 "Concrete": 43.2, // Manual Table 7: 1.700"
                 "Tungsten": 3.3,  // Manual Table 7: 0.130"
                 "DU": 1.3,        // Manual Table 7: 0.050"
-                "LeadGlass": 14.0 // 납유리(ρ≈3.3, Pb30%) 대표값
+                "LeadGlass": 14.0,// 납유리(ρ≈3.3, Pb30%) 대표값
+                "Water": 48.0,    // NIST XCOM @370keV avg, ρ=1.0
+                "Polyethylene": 51.0, // NIST XCOM @370keV, ρ=0.94
+                "Paraffin": 52.0  // NIST XCOM @370keV, ρ=0.93
             }
         },
         {
@@ -39,7 +46,10 @@ const GLOBAL_DB = {
                 "Concrete": 30.0, // Manual Table 7: 1.180"
                 "Tungsten": 0.8,  // Manual Table 7: 0.032"
                 "DU": 0.6,        // Not listed in Table 7 DU row, using calc/approx from density
-                "LeadGlass": 2.8  // 납유리 대표값
+                "LeadGlass": 2.8, // 납유리 대표값
+                "Water": 38.0,    // NIST XCOM @215keV avg, ρ=1.0
+                "Polyethylene": 40.0, // NIST XCOM @215keV, ρ=0.94
+                "Paraffin": 41.0  // NIST XCOM @215keV, ρ=0.93
             }
         },
         {
@@ -52,7 +62,10 @@ const GLOBAL_DB = {
                 "Concrete": 29.0, // Manual Table 7: 1.140"
                 "Tungsten": 0.25, // Approx (Not explicitly in W row for Yb)
                 "DU": 0.2,        // Approx
-                "LeadGlass": 2.2  // 납유리 대표값
+                "LeadGlass": 2.2, // 납유리 대표값
+                "Water": 35.0,    // NIST XCOM @93keV avg, ρ=1.0
+                "Polyethylene": 37.0, // NIST XCOM @93keV, ρ=0.94
+                "Paraffin": 38.0  // NIST XCOM @93keV, ρ=0.93
             }
         },
         {
@@ -65,7 +78,10 @@ const GLOBAL_DB = {
                 "Concrete": 61.0, // Manual Table 7: 2.400"
                 "Tungsten": 7.9,  // Manual Table 7: 0.310"
                 "DU": 6.8,        // Manual Table 7: 0.270"
-                "LeadGlass": 33.0 // 납유리 대표값
+                "LeadGlass": 33.0,// 납유리 대표값
+                "Water": 111.0,   // NIST XCOM @1.25MeV, ρ=1.0
+                "Polyethylene": 118.0, // NIST XCOM @1.25MeV, ρ=0.94
+                "Paraffin": 119.0 // NIST XCOM @1.25MeV, ρ=0.93
             }
         },
         {
@@ -78,7 +94,10 @@ const GLOBAL_DB = {
                 "Concrete": 76.2, // Manual Table 7: 3.00"
                 "Tungsten": 5.7,  // Manual Table 7: 0.225"
                 "DU": 3.2,        // Manual Table 7: 0.125"
-                "LeadGlass": 17.0 // 납유리 대표값
+                "LeadGlass": 17.0,// 납유리 대표값
+                "Water": 87.0,    // NIST XCOM @662keV, ρ=1.0
+                "Polyethylene": 93.0, // NIST XCOM @662keV, ρ=0.94
+                "Paraffin": 94.0  // NIST XCOM @662keV, ρ=0.93
             }
         }
     ],
