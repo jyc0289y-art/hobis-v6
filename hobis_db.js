@@ -1,4 +1,4 @@
-/* HOBIS DATABASE MODULE v3.5
+/* HOBIS DATABASE MODULE v3.6
    파일명: hobis_db.js
 
    [데이터 검증 소스]
@@ -12,13 +12,41 @@
         PE n=18.5mm, Water n=21.6mm
 
    [단위]
-   - Gamma: mSv·m²/h·Ci
+   - Gamma: mSv·m²/h·Ci (= R·cm²/(mCi·h) × 10)
    - HVL: mm
    - HL: d(Days), y(Years)
+
+   [QSA vs ICRP107 감마상수(Γ) 차이 원인]
+   두 DB의 Γ 값이 다른 이유는 산출 방법론의 차이에 기인한다:
+
+   ● QSA (MAN-027): 제조사 실측 기반. 특정 소스 캡슐(encapsulation) 조건에서
+     측정한 Air Kerma Rate를 R 단위로 제시. 캡슐에 의한 자기차폐(self-shielding)와
+     저에너지 감마선 필터링이 반영된 실용값.
+     → 일반적으로 bare source 이론값보다 낮음 (캡슐이 저에너지선 흡수)
+     → 예: Ir-192 QSA=4.80 vs ICRP107=4.60 (QSA가 4% 높음 — 캡슐 보정 차이)
+
+   ● ICRP107 (Smith & Stabin 2012): ICRP Publication 107 붕괴 데이터에서
+     모든 감마선/X선의 에너지×방출률을 적분하여 이론적 Γ를 계산.
+     Unfiltered(bare) 선원 기준이므로 캡슐 효과 미반영.
+     → 저에너지 기여가 큰 핵종(Yb-169 등)에서 QSA 대비 큰 차이 발생
+     → 예: Yb-169 QSA=1.25 vs ICRP107=1.85 (ICRP가 48% 높음 — 저에너지선 포함)
+
+   ● 핵종별 차이 요약:
+     Ir-192: QSA 4.80 vs ICRP 4.60 (QSA +4%) — 캡슐 보정 방향 차이
+     Se-75:  QSA 2.03 vs ICRP 2.03 (일치) — 중간 에너지, 캡슐 효과 미미
+     Yb-169: QSA 1.25 vs ICRP 1.85 (ICRP +48%) — 저에너지(93keV) 기여 큼
+     Co-60:  QSA 13.0 vs ICRP 12.9 (QSA +1%) — 고에너지, 캡슐 효과 거의 없음
+     Cs-137: QSA 3.20 vs ICRP 3.43 (ICRP +7%) — 단일선 662keV, Ba X선 기여 차이
+
+   ● 실무 권장:
+     - 차폐 설계(보수적 평가): QSA 값 또는 둘 중 큰 값 사용
+     - 이론 계산/연구: ICRP107 값 사용
+     - 두 값의 차이가 10% 이내이면 실무상 유의미하지 않음
 */
 
 const GLOBAL_DB = {
     // [1] QSA Global (MAN-027 Table 6 & 7 Strict Compliance)
+    // 제조사 실측 기반 — 캡슐된 소스의 실용적 감마상수
     "QSA": [
         {
             id: "Ir-192",
@@ -88,7 +116,10 @@ const GLOBAL_DB = {
     ],
 
     // [2] ICRP 107 (Smith & Stabin 2012)
-    // Note: Ir-192 Unfiltered source shows significantly lower HVL due to soft spectrum
+    // Bare(unfiltered) 선원 기준 이론값 — 캡슐 자기차폐 미반영
+    // Γ: ICRP Pub.107 붕괴 데이터에서 전 에너지 감마/X선 적분
+    // HVL: ICRP 스펙트럼 기반 → 저에너지선 포함으로 Pb HVL이 QSA보다 낮음
+    //       (저에너지선이 Pb에 더 잘 흡수되므로 실효 HVL 감소)
     "ICRP107": [
         { id: "Ir-192", hl: 73.83, unit: "d", gamma: 4.60, hvl: { "Lead": 2.67 } },
         { id: "Se-75",  hl: 119.8, unit: "d", gamma: 2.03, hvl: { "Lead": 1.00 } },
