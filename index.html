@@ -36,6 +36,7 @@
         <button class="tab-btn" onclick="setMainTab('cf252', this)">Cf-252</button>
         <button class="tab-btn" onclick="setMainTab('logistics', this)">LOGISTICS</button>
         <button class="tab-btn" onclick="setMainTab('order', this)">ORDER</button>
+        <button class="tab-btn" onclick="setMainTab('reference', this)">REF</button>
     </div>
 
     <div class="workspace">
@@ -247,6 +248,15 @@
                 </div>
             </div>
 
+            <!-- REFERENCE PANEL (full-width) -->
+            <div id="referencePanel" class="panel hidden" style="flex-grow:1; overflow-y:auto; max-height:calc(100vh - 150px);">
+                <div class="header" style="color:var(--hobis-cyan); border-color:var(--hobis-cyan);">
+                    <span>PARAMETER VALIDATION REPORT</span>
+                    <button class="btn-outline" style="color:var(--hobis-cyan); border-color:var(--hobis-cyan);" onclick="refExportPDF()">PDF</button>
+                </div>
+                <div id="referenceContent"></div>
+            </div>
+
             <!-- FLOW CAL DETAIL (RIGHT) -->
             <div id="flowCalDetailPanel" class="panel hidden" style="flex-grow:1;">
                 <div class="header" style="color:white;">
@@ -323,6 +333,7 @@
 <script src="js/cf252-ui.js?v=20260326e"></script>
 <script src="js/logistics.js"></script>
 <script src="js/ri-order.js"></script>
+<script src="js/reference.js?v=20260326e"></script>
 
 </body>
 </html>

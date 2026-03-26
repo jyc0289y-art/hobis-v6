@@ -96,6 +96,7 @@ function setMainTab(t, btn) {
     document.getElementById('fcEmptyDetail').classList.add('hidden');
     document.getElementById('logPanel').classList.add('hidden');
     document.getElementById('orderPanel').classList.add('hidden');
+    document.getElementById('referencePanel').classList.add('hidden');
 
     // FC mode: full-width layout for calendar and order
     const ws = document.querySelector('.workspace');
@@ -114,6 +115,10 @@ function setMainTab(t, btn) {
         ws.classList.add('fc-mode');
         document.getElementById('orderPanel').classList.remove('hidden');
         roInit();
+    } else if (t === 'reference') {
+        ws.classList.add('fc-mode');
+        document.getElementById('referencePanel').classList.remove('hidden');
+        if (typeof refRender === 'function') refRender();
     } else if (t === 'cf252') {
         document.getElementById('logPanel').classList.remove('hidden');
         document.getElementById('cf252Panel').classList.remove('hidden');
