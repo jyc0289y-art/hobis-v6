@@ -28,6 +28,7 @@ function shieldGenerateSVG(sources, layers, options = {}) {
         'Polyethylene': { fill: '#6a6a3a', stroke: '#b0b060', label: 'PE' },
         'Paraffin': { fill: '#8a7a4a', stroke: '#d0c070', label: 'Wax' },
         'Aluminum': { fill: '#8a8a8a', stroke: '#c0c0c0', label: 'Al' },
+        'Iron': { fill: '#5a6a7a', stroke: '#8a9aaa', label: 'Fe' },
     };
 
     const src = sources[0] || { value: 0, distance_m: 1 };
