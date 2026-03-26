@@ -615,6 +615,95 @@ function decayCloseOverlay() {
 }
 
 
+// ========== 전체 레퍼런스 테이블 생성 ==========
+
+function generateFullRefHTML(forPDF) {
+    const sel = document.getElementById('hvlSource');
+    const hvlBasis = (sel && sel.value === 'nist') ? 'NIST XCOM (narrow-beam)' : 'QSA MAN-027 (broad-beam)';
+    const dbSel = document.getElementById('dbSelector');
+    const dbName = dbSel ? dbSel.value : 'QSA';
+
+    const tbl = (forPDF)
+        ? 'style="width:100%;font-size:9px;border-collapse:collapse;margin:5px 0;"'
+        : 'style="width:100%;font-size:0.65rem;border-collapse:collapse;margin:5px 0;"';
+    const td = 'style="padding:2px 5px;border:1px solid ' + (forPDF ? '#ddd' : '#2a3b47') + ';"';
+    const th = 'style="padding:3px 5px;border:1px solid ' + (forPDF ? '#ddd' : '#2a3b47') + ';background:' + (forPDF ? '#f0f0f0' : '#1a2530') + ';font-weight:bold;"';
+    const secColor = forPDF ? '#333' : 'var(--hobis-cyan)';
+    const txtColor = forPDF ? '#444' : '#8fa3b0';
+    const noteColor = forPDF ? '#888' : '#4a5a64';
+
+    let html = '';
+
+    // --- 섹션 1: 감마상수 비교 ---
+    html += `<div style="font-size:${forPDF?'11px':'0.75rem'};font-weight:bold;color:${secColor};margin:10px 0 4px;">1. 감마상수 Γ (mSv·m²/h·Ci) — 현재 DB: ${dbName}</div>`;
+    html += `<table ${tbl}><tr><td ${th}>핵종</td><td ${th}>QSA</td><td ${th}>ICRP107</td><td ${th}>차이</td><td ${th}>원인</td></tr>`;
+    const gammaComp = [
+        ['Ir-192', 4.80, 4.60, '+4%', '캡슐 보정 방향 차이'],
+        ['Se-75', 2.03, 2.03, '0%', '중간에너지, 캡슐효과 미미'],
+        ['Yb-169', 1.25, 1.85, '-32%', '저에너지(93keV) — bare source에서 저에너지선 포함'],
+        ['Co-60', 13.0, 12.9, '+1%', '고에너지, 캡슐효과 거의 없음'],
+        ['Cs-137', 3.20, 3.43, '-7%', 'Ba X선 기여 차이'],
+    ];
+    gammaComp.forEach(r => {
+        html += `<tr><td ${td}>${r[0]}</td><td ${td}>${r[1]}</td><td ${td}>${r[2]}</td><td ${td}>${r[3]}</td><td ${td} style="font-size:${forPDF?'8px':'0.6rem'};color:${noteColor};">${r[4]}</td></tr>`;
+    });
+    html += '</table>';
+    html += `<div style="font-size:${forPDF?'8px':'0.55rem'};color:${noteColor};margin:3px 0 8px;">QSA: 캡슐 소스 실측값 (자기차폐 반영) | ICRP107: bare source 이론 적분값 (캡슐 미반영)</div>`;
+
+    // --- 섹션 2: HVL 비교 (현재 선택된 DB 기준) ---
+    html += `<div style="font-size:${forPDF?'11px':'0.75rem'};font-weight:bold;color:${secColor};margin:10px 0 4px;">2. 반가층 HVL (mm) — 현재: ${hvlBasis}</div>`;
+    html += `<table ${tbl}><tr><td ${th}>재질</td><td ${th}>Ir-192</td><td ${th}>Co-60</td><td ${th}>Cs-137</td><td ${th}>출처</td></tr>`;
+    const hvlSrc = (sel && sel.value === 'nist') ? 'hvl_nist' : 'hvl';
+    const qsa = GLOBAL_DB.QSA;
+    const matList = [
+        ['Lead','Pb','QSA MAN-027 T7'],['Steel','Steel','QSA MAN-027 T7'],['Concrete','Conc','QSA MAN-027 T7'],
+        ['Water','H₂O','NIST XCOM'],['Polyethylene','PE','NIST XCOM'],['Paraffin','Wax','NIST XCOM'],['Aluminum','Al','NIST XCOM'],
+    ];
+    matList.forEach(m => {
+        const ir = qsa[0][hvlSrc]?.[m[0]] ?? qsa[0].hvl[m[0]] ?? '-';
+        const co = qsa[3][hvlSrc]?.[m[0]] ?? qsa[3].hvl[m[0]] ?? '-';
+        const cs = qsa[4][hvlSrc]?.[m[0]] ?? qsa[4].hvl[m[0]] ?? '-';
+        html += `<tr><td ${td}>${m[0]}</td><td ${td}>${ir}</td><td ${td}>${co}</td><td ${td}>${cs}</td><td ${td} style="font-size:${forPDF?'8px':'0.55rem'};color:${noteColor};">${m[2]}</td></tr>`;
+    });
+    html += '</table>';
+    html += `<div style="font-size:${forPDF?'8px':'0.55rem'};color:${noteColor};margin:3px 0 8px;">QSA broad-beam: 빌드업 팩터 포함 (보수적, 10-20% 높음) | NIST narrow-beam: HVL=ln2/(μ/ρ×ρ) 이론값</div>`;
+
+    // --- 섹션 3: 타당성 검증 요약 ---
+    html += `<div style="font-size:${forPDF?'11px':'0.75rem'};font-weight:bold;color:${secColor};margin:10px 0 4px;">3. 데이터 타당성 검증</div>`;
+    html += `<table ${tbl}><tr><td ${th}>항목</td><td ${th}>검증 방법</td><td ${th}>결과</td></tr>`;
+    const validations = [
+        ['Pb QSA vs NIST', 'Cs-137 단일선(662keV) 비교', 'NIST 5.5mm vs QSA 6.4mm (-14%) — 빌드업 차이로 설명'],
+        ['Al γ-HVL', 'NIST XCOM μ/ρ 계산 + Nuclear-Power.com 교차검증', '500keV: 계산 3.05cm = 문헌 3.05cm 일치'],
+        ['Fe γ-HVL', 'NIST XCOM + NDT 산업 표준 비교', 'Ir-192 NIST 8.5mm vs QSA Steel 13mm — broad/narrow 차이'],
+        ['Paraffin n-HVL', 'PE 대비 H원자밀도 비교', 'PE nH=8.13e22 vs Paraffin nH=8.32e22/cm³ → 비율 0.977 → 1.9cm'],
+        ['Al n-HVL (Cf-252)', 'El-Khayatt 2009 + 7개 문헌 교차검증', 'ΣR/ρ=0.0245±0.001 (1955-2023 합의) → 10.5cm'],
+        ['Fe n-HVL (Cf-252)', 'El-Khayatt 2009 + 교차검증', 'ΣR/ρ=0.0198±0.001 → 4.4cm, Bakr 2020: Cf-252 1차 차폐 권장'],
+    ];
+    validations.forEach(v => {
+        html += `<tr><td ${td}>${v[0]}</td><td ${td} style="font-size:${forPDF?'8px':'0.55rem'};">${v[1]}</td><td ${td} style="font-size:${forPDF?'8px':'0.55rem'};color:${noteColor};">${v[2]}</td></tr>`;
+    });
+    html += '</table>';
+
+    // --- 섹션 4: 참조 문헌 ---
+    html += `<div style="font-size:${forPDF?'11px':'0.75rem'};font-weight:bold;color:${secColor};margin:10px 0 4px;">4. 참조 문헌</div>`;
+    const refs = [
+        'QSA Global MAN-027 (Sep 2022) — QSA 5핵종 Γ, HVL (broad-beam)',
+        'Smith & Stabin (2012), ICRP-107 — ICRP107 13핵종 Γ, Cf-252 Γ',
+        'NIST XCOM Photon Cross Sections DB — γ질량감쇄계수, HVL 계산',
+        'Alizadeh Rahvar et al., Int.J.Radiat.Res. 18(2):381-387, 2020 — Cf-252 γ/n HVL (MCNPX)',
+        'El-Khayatt & Abdo, Ann.Nucl.Energy 37(2):218-223, 2009 — Al/Fe 중성자 제거단면적',
+        'Chapman & Storrs, ORNL AECD-3978, 1955 — 중성자 제거단면적 원천 실험 데이터',
+        'Hila et al., Rad.Phys.Chem. 2023 — ENDF/B-VIII.0 MC 교차검증',
+        'ICRP 74 — H/Φ 중성자 선량환산계수',
+        'Bakr & Sayed, AIP Advances 10:075203, 2020 — Cf-252 최적 차폐 설계',
+    ];
+    html += `<div style="font-size:${forPDF?'9px':'0.6rem'};color:${txtColor};line-height:1.5;">`;
+    refs.forEach((r, i) => { html += `[${i+1}] ${r}<br>`; });
+    html += '</div>';
+
+    return html;
+}
+
 // ========== 통합 PDF 내보내기 ==========
 
 /**
@@ -696,18 +785,7 @@ body{font-family:"Noto Sans KR",sans-serif;color:#222;padding:30px;font-size:12p
 ${specReport ? '<div class="header">SPECIFICATION</div>' + specReport : ''}
 ${svgHTML}
 ${chartImg}
-${currentSubMode.startsWith('shield') ? `
-<div style="margin-top:20px; border-top:1px solid #ccc; padding-top:10px;">
-    <div class="header">DATA REFERENCES</div>
-    <table style="width:100%; font-size:10px; border-collapse:collapse; margin-top:5px;">
-        <tr style="background:#f0f0f0; font-weight:bold;"><td style="padding:3px 6px; border:1px solid #ddd;">Category</td><td style="padding:3px 6px; border:1px solid #ddd;">Source</td><td style="padding:3px 6px; border:1px solid #ddd;">Items</td></tr>
-        <tr><td style="padding:3px 6px; border:1px solid #ddd;">Gamma Constant (Γ)</td><td style="padding:3px 6px; border:1px solid #ddd;">QSA Global MAN-027 Table 6 / Smith &amp; Stabin 2012 (ICRP-107)</td><td style="padding:3px 6px; border:1px solid #ddd;">mSv·m²/h·Ci</td></tr>
-        <tr><td style="padding:3px 6px; border:1px solid #ddd;">HVL (QSA broad-beam)</td><td style="padding:3px 6px; border:1px solid #ddd;">QSA Global MAN-027 Table 7</td><td style="padding:3px 6px; border:1px solid #ddd;">Pb, Steel, Concrete, W, DU</td></tr>
-        <tr><td style="padding:3px 6px; border:1px solid #ddd;">HVL (NIST narrow-beam)</td><td style="padding:3px 6px; border:1px solid #ddd;">NIST XCOM Photon Cross Sections DB — HVL=ln2/(μ/ρ×ρ)</td><td style="padding:3px 6px; border:1px solid #ddd;">All materials</td></tr>
-        <tr><td style="padding:3px 6px; border:1px solid #ddd;">HVL (Water/PE/Paraffin/Al)</td><td style="padding:3px 6px; border:1px solid #ddd;">NIST XCOM (primary), Nuclear-Power.com (cross-validation)</td><td style="padding:3px 6px; border:1px solid #ddd;">Gamma HVL at nuclide avg energy</td></tr>
-    </table>
-    <div style="font-size:9px; color:#888; margin-top:5px;">QSA broad-beam values include buildup factor (conservative, 10-20% higher than NIST narrow-beam theoretical values)</div>
-</div>` : ''}
+${currentSubMode.startsWith('shield') ? '<div style="margin-top:20px; border-top:1px solid #ccc; padding-top:10px; page-break-before:auto;"><div class="header">DATA REFERENCES</div>' + generateFullRefHTML(true) + '</div>' : ''}
 <div class="report-footer">Generated by HOBIS v6.0 Radiation Protection System</div>
 </body></html>`;
 

@@ -154,30 +154,15 @@ function calculate() {
                     </div>`;
             }
         } catch(e) { console.warn('SVG diagram error:', e); }
-        // HVL 출처 + 검증 근거 정보
-        const hvlRefDetail = {
-            'Lead': { src: 'QSA MAN-027 Table 7', method: 'Manufacturer broad-beam', verify: 'NIST XCOM Cs-137 narrow-beam 5.5mm vs QSA 6.4mm (-14%, buildup factor 차이)' },
-            'Steel': { src: 'QSA MAN-027 Table 7', method: 'Manufacturer broad-beam', verify: 'NDT Industry standard' },
-            'Concrete': { src: 'QSA MAN-027 Table 7', method: 'Manufacturer broad-beam', verify: 'NDT Industry standard' },
-            'Tungsten': { src: 'QSA MAN-027 Table 7', method: 'Manufacturer broad-beam', verify: '' },
-            'DU': { src: 'QSA MAN-027 Table 7', method: 'Manufacturer broad-beam', verify: '' },
-            'LeadGlass': { src: 'Representative', method: 'ρ≈3.3 g/cm³, Pb 30wt%', verify: '' },
-            'Water': { src: 'NIST XCOM', method: 'HVL=ln2/(μ/ρ×ρ), narrow-beam', verify: 'Cs-137 NIST 80mm ≈ 코드값 87mm (broad-beam 보정)' },
-            'Polyethylene': { src: 'NIST XCOM', method: 'HVL=ln2/(μ/ρ×ρ), ρ=0.94', verify: 'Water 대비 밀도비 스케일링 확인' },
-            'Paraffin': { src: 'NIST XCOM', method: 'HVL=ln2/(μ/ρ×ρ), ρ=0.93', verify: 'PE와 유사 조성(탄화수소)' },
-            'Aluminum': { src: 'NIST XCOM', method: 'HVL=ln2/(μ/ρ×ρ), ρ=2.699', verify: 'Nuclear-Power.com 500keV Al HVL 3.05cm 일치' },
-        };
-        const usedMats = [...new Set(lays.map(l => l.m))];
-        let hvlRefRows = usedMats.map(m => {
-            const r = hvlRefDetail[m] || { src: 'N/A', method: '', verify: '' };
-            return `<div class="spec-row" style="font-size:0.65rem;"><span class="spec-key" style="color:#5f7481;">${m}</span> <span class="spec-val" style="color:#5f7481;">${r.src} (${r.method})</span></div>`;
-        }).join('');
-        const hvlRefHTML = `<div style="margin-top:8px; padding:6px 8px; border-top:1px dashed var(--hobis-border);">
-            <div style="font-size:0.7rem; font-weight:bold; color:#5f7481; margin-bottom:3px;">HVL REFERENCE — <span style="color:var(--hobis-cyan);">${hvlSrcLabel}</span></div>
-            ${hvlRefRows}
-            <div style="font-size:0.6rem; color:#4a5a64; margin-top:4px;">QSA: broad-beam(빌드업 포함, 보수적) | NIST: narrow-beam(이론값, HVL=ln2/(μ/ρ×ρ))</div>
+        // 전체 레퍼런스 (접이식)
+        const fullRefHTML = (typeof generateFullRefHTML === 'function') ? generateFullRefHTML(false) : '';
+        const refSectionHTML = `<div style="margin-top:10px; border-top:1px dashed var(--hobis-border); padding-top:6px;">
+            <details>
+                <summary style="cursor:pointer; font-size:0.75rem; font-weight:bold; color:var(--hobis-cyan);">DATA REFERENCE — ${hvlSrcLabel} ▸</summary>
+                <div style="margin-top:6px;">${fullRefHTML}</div>
+            </details>
         </div>`;
-        document.getElementById('specReportBox').innerHTML = `<div class="spec-report">${reportSpecHTML}</div>` + hvlRefHTML + shieldDiagramHTML;
+        document.getElementById('specReportBox').innerHTML = `<div class="spec-report">${reportSpecHTML}</div>` + refSectionHTML + shieldDiagramHTML;
 
         // Chart
         if (lays.length) {
@@ -235,7 +220,8 @@ function calculate() {
                     showResult(`${thk.toFixed(2)} mm`, mat);
                     addToLog(entry);
 
-                    document.getElementById('specReportBox').innerHTML = `<div class="spec-report"><div class="spec-row"><span class="spec-key">${n.id}:</span> <span class="spec-val">Γ=${n.gamma} mSv·m²/h·Ci</span></div><div class="spec-row"><span class="spec-key">${mat} HVL:</span> <span class="spec-val">${h}mm</span></div></div><div style="margin-top:8px; padding:6px 8px; border-top:1px dashed var(--hobis-border);"><div style="font-size:0.7rem; font-weight:bold; color:#5f7481; margin-bottom:3px;">HVL REFERENCE — <span style="color:var(--hobis-cyan);">${revHvlLabel}</span></div><div style="font-size:0.6rem; color:#4a5a64; margin-top:4px;">QSA: broad-beam(빌드업 포함, 보수적) | NIST: narrow-beam(이론값, HVL=ln2/(μ/ρ×ρ))</div></div>`;
+                    const revFullRef = (typeof generateFullRefHTML === 'function') ? generateFullRefHTML(false) : '';
+                    document.getElementById('specReportBox').innerHTML = `<div class="spec-report"><div class="spec-row"><span class="spec-key">${n.id}:</span> <span class="spec-val">Γ=${n.gamma} mSv·m²/h·Ci</span></div><div class="spec-row"><span class="spec-key">${mat} HVL:</span> <span class="spec-val">${h}mm</span></div></div><div style="margin-top:10px; border-top:1px dashed var(--hobis-border); padding-top:6px;"><details><summary style="cursor:pointer; font-size:0.75rem; font-weight:bold; color:var(--hobis-cyan);">DATA REFERENCE — ${revHvlLabel} ▸</summary><div style="margin-top:6px;">${revFullRef}</div></details></div>`;
 
                     const L = [], D = [];
                     const yAxisLabel = document.getElementById('targetType').value === 'dose'
