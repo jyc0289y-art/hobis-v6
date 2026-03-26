@@ -1,7 +1,6 @@
 // --- HOBIS CHART MODULE ---
 // Graph rendering (V4.5 SPEC: clean line + points on hover)
-
-let myChart = null;
+// Note: myChart is declared in core.js (global scope)
 
 function drawChart(L, D, lbl, xl, mx, my, startDate) {
     if (myChart) myChart.destroy();
