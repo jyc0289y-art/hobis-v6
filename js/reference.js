@@ -40,7 +40,7 @@ function refRender() {
         <tr><td ${S.td}>Cs-137</td><td ${S.td}>3.20</td><td ${S.td}>3.43</td><td ${S.td}>-6.7%</td><td ${S.tdn}>단일선 662keV이나, Ba-137m X선(~32keV) 기여가 ICRP107에 포함됨. QSA 캡슐이 X선 흡수 → 차이 발생</td><td ${S.td}>${S.bar(93,'#00ff33')}</td></tr>
     </table>`;
     html += `<div ${S.note}><b>결론:</b> QSA는 캡슐된 소스의 실측값(자기차폐 반영), ICRP107은 bare source 이론 적분값. 저에너지 핵종일수록 차이가 커짐. 차폐설계(보수적)에는 QSA 값 또는 둘 중 큰 값 사용 권장.<br>
-    <b>출처:</b> <a ${S.link} href="https://www.qsa-global.com/">QSA Global MAN-027 (Rev. Sep 2022)</a>, Table 6 | Smith & Stabin, Health Phys 102(3):271-291, 2012 (<a ${S.link} href="https://doi.org/10.1097/HP.0b013e318235153e">DOI</a>)</div>`;
+    <b>출처:</b> <a ${S.link} href="https://www.qsa-global.com/">QSA Global MAN-027 (Rev. Sep 2022)</a>, Table 6 | Smith & Stabin, Health Phys 102(3):271-291, 2012 (<a ${S.link} href="https://doi.org/10.1097/HP.0b013e318235153a">DOI</a>)</div>`;
 
     // ===== 1.2 Cf-252 감마상수 =====
     html += `<div ${S.h3}>1.2 Cf-252 감마상수 및 중성자 선량환산계수</div>`;
@@ -52,7 +52,7 @@ function refRender() {
         <tr><td ${S.td}>ν (중성자 다중도)</td><td ${S.td}>3.765</td><td ${S.td}>n/fission</td><td ${S.td}>NNDC / ENSDF</td><td ${S.tdn}>자발핵분열당 평균 중성자 수</td></tr>
         <tr><td ${S.td}>R → mSv 환산</td><td ${S.td}>1R = 10 mSv</td><td ${S.td}>-</td><td ${S.td}>1R = 1cGy = 10mSv (단순환산)</td><td ${S.tdn}>감마선 F-factor ≈ 0.876 cGy/R이나, 보고서 승인 기준 단순환산 채택 (보수적)</td></tr>
     </table>`;
-    html += `<div ${S.note}><b>출처:</b> Smith & Stabin, Health Phys 102(3):271-291, 2012 (<a ${S.link} href="https://doi.org/10.1097/HP.0b013e318235153e">DOI</a>) | ICRP Publication 74 (<a ${S.link} href="https://www.icrp.org/publication.asp?id=ICRP%20Publication%2074">ICRP</a>)</div>`;
+    html += `<div ${S.note}><b>출처:</b> Smith & Stabin, Health Phys 102(3):271-291, 2012 (<a ${S.link} href="https://doi.org/10.1097/HP.0b013e318235153a">DOI</a>) | ICRP Publication 74 (<a ${S.link} href="https://www.icrp.org/publication.asp?id=ICRP%20Publication%2074">ICRP</a>)</div>`;
 
     // ===== 2. 반가층 HVL — 감마선 =====
     html += `<div ${S.h2}>2. 반가층 HVL — 감마선 (Gamma)</div>`;
@@ -113,7 +113,7 @@ function refRender() {
     html += `<div ${S.h2}>3. 반가층 HVL — 중성자 (Cf-252 Fission Spectrum)</div>`;
 
     html += `<div ${S.h3}>3.1 Alizadeh Rahvar et al. 2020 — MCNPX 시뮬레이션 (Table 2)</div>`;
-    html += `<div ${S.note}>논문: Alizadeh Rahvar et al., "Radiation Shielding Materials: Half-value layer determination for separate and simultaneous photon and neutron emissions by a ²⁵²Cf source", <i>Int. J. Radiat. Res.</i>, 18(2):381-387, 2020. (<a ${S.link} href="https://doi.org/10.18869/acadpub.ijrr.18.2.381">DOI</a>)</div>`;
+    html += `<div ${S.note}>논문: Alizadeh Rahvar et al., "Radiation Shielding Materials: Half-value layer determination for separate and simultaneous photon and neutron emissions by a ²⁵²Cf source", <i>Int. J. Radiat. Res.</i>, 18(2):381-387, 2020. (<a ${S.link} href="http://ijrr.com/article-1-2945-en.html">DOI</a>)</div>`;
     html += `<table ${S.tbl}>
         <tr><td ${S.th}>재질</td><td ${S.th}>중성자 HVL (cm)</td><td ${S.th}>감마 HVL (cm)</td><td ${S.th}>모드</td><td ${S.th}>비고</td></tr>
         <tr><td ${S.td}><b>Polyethylene</b></td><td ${S.td}>1.85</td><td ${S.td}>-</td><td ${S.td}>Separate neutron</td><td ${S.tdn}>Zarezadeh 2013 실험값 1.8cm과 2% 차이 (Table 2)</td></tr>
@@ -153,7 +153,7 @@ function refRender() {
         <tr><td ${S.td}>Kaplan</td><td ${S.td}>1989</td><td ${S.td}>0.0245</td><td ${S.td}>교과서 인용</td><td ${S.tdn}>"Nuclear Physics" (교과서)</td></tr>
         <tr><td ${S.td}>Shultis & Faw</td><td ${S.td}>2000</td><td ${S.td}>0.0245</td><td ${S.td}>교과서 인용</td><td ${S.tdn}>"Radiation Shielding" (ANS)</td></tr>
         <tr><td ${S.td}>NBS Handbook 63 (Blizard)</td><td ${S.td}>-</td><td ${S.td}>0.0248</td><td ${S.td}>핸드북</td><td ${S.tdn}>National Bureau of Standards</td></tr>
-        <tr><td ${S.td}><b>Hila et al.</b></td><td ${S.td}>2023</td><td ${S.td}>0.0234</td><td ${S.td}>ENDF/B-VIII.0 MC</td><td ${S.tdn}><a ${S.link} href="https://doi.org/10.1016/j.radphyschem.2023.110655">Rad.Phys.Chem. 2023</a> (~5% dev)</td></tr>
+        <tr><td ${S.td}><b>Hila et al.</b></td><td ${S.td}>2023</td><td ${S.td}>0.0234</td><td ${S.td}>ENDF/B-VIII.0 MC</td><td ${S.tdn}><a ${S.link} href="https://doi.org/10.1016/j.radphyschem.2023.110770">Rad.Phys.Chem. 2023</a> (~5% dev)</td></tr>
         <tr><td ${S.td}>Phy-X/PSD Online</td><td ${S.td}>-</td><td ${S.td}>0.0245</td><td ${S.td}>온라인 계산기</td><td ${S.tdn}><a ${S.link} href="https://phy-x.net/PSD">phy-x.net/PSD</a></td></tr>
     </table>`;
     html += `<div ${S.note}><b>합의값:</b> ΣR/ρ = 0.0245 ± 0.001 cm²/g → ΣR = 0.0661 cm⁻¹ → <b>HVL = 10.5 ± 0.3 cm</b><br>
@@ -168,10 +168,10 @@ function refRender() {
         <tr><td ${S.td}><b>El-Khayatt & Abdo</b></td><td ${S.td}>2009</td><td ${S.td}>0.0200</td><td ${S.td}>계산</td><td ${S.tdn}><a ${S.link} href="https://doi.org/10.1016/j.anucene.2009.10.022">Ann.Nucl.Energy 37(2):218</a></td></tr>
         <tr><td ${S.td}>Chapman & Storrs</td><td ${S.td}>1955</td><td ${S.td}>0.01984</td><td ${S.td}>ORNL 실험</td><td ${S.tdn}>AECD-3978</td></tr>
         <tr><td ${S.td}>Shultis & Faw</td><td ${S.td}>2000</td><td ${S.td}>0.01984</td><td ${S.td}>교과서</td><td ${S.tdn}>"Radiation Shielding"</td></tr>
-        <tr><td ${S.td}><b>Hila et al.</b></td><td ${S.td}>2023</td><td ${S.td}>0.0191</td><td ${S.td}>ENDF/B-VIII.0 MC</td><td ${S.tdn}><a ${S.link} href="https://doi.org/10.1016/j.radphyschem.2023.110655">Rad.Phys.Chem. 2023</a> (~4% dev)</td></tr>
+        <tr><td ${S.td}><b>Hila et al.</b></td><td ${S.td}>2023</td><td ${S.td}>0.0191</td><td ${S.td}>ENDF/B-VIII.0 MC</td><td ${S.tdn}><a ${S.link} href="https://doi.org/10.1016/j.radphyschem.2023.110770">Rad.Phys.Chem. 2023</a> (~4% dev)</td></tr>
     </table>`;
     html += `<div ${S.note}><b>합의값:</b> ΣR/ρ = 0.0198 ± 0.001 → ΣR = 0.156 cm⁻¹ → <b>HVL = 4.4 ± 0.2 cm</b><br>
-    <b>Cf-252 특화 연구:</b> Bakr & Sayed, AIP Advances 10:075203, 2020 (<a ${S.link} href="https://doi.org/10.1063/5.0005383">DOI</a>) — Cf-252 차폐에서 Fe를 <b>1차 차폐층</b>으로 권장. 고속중성자 비탄성산란으로 에너지 감소 후, 후단 PE/붕소에서 열중성자 포획. 최적 순서: Fe → PE(또는 흑연) → 붕소/Cd → Pb</div>`;
+    <b>Cf-252 특화 연구:</b> Guembou Shouop et al., AIP Advances 10:075203, 2020 (<a ${S.link} href="https://doi.org/10.1063/1.5144923">DOI</a>) — Cf-252 차폐에서 Fe를 <b>1차 차폐층</b>으로 권장. 고속중성자 비탄성산란으로 에너지 감소 후, 후단 PE/붕소에서 열중성자 포획. 최적 순서: Fe → PE(또는 흑연) → 붕소/Cd → Pb</div>`;
 
     // ===== 4. 단위 환산 =====
     html += `<div ${S.h2}>4. 단위 환산 계수</div>`;
@@ -191,14 +191,14 @@ function refRender() {
     html += `<div ${S.h2}>5. 참조 문헌 목록</div>`;
     const refs = [
         ['QSA Global MAN-027 (Rev. Sep 2022)', 'QSA 5핵종 감마상수, HVL (broad-beam)', 'https://www.qsa-global.com/'],
-        ['Smith & Stabin, Health Phys 102(3):271-291, 2012', 'ICRP-107 기반 13핵종 감마상수, Cf-252 감마상수', 'https://doi.org/10.1097/HP.0b013e318235153e'],
+        ['Smith & Stabin, Health Phys 102(3):271-291, 2012', 'ICRP-107 기반 13핵종 감마상수, Cf-252 감마상수', 'https://doi.org/10.1097/HP.0b013e318235153a'],
         ['NIST XCOM Photon Cross Sections Database', '감마선 질량감쇄계수 — HVL 계산의 기초 데이터', 'https://physics.nist.gov/PhysRefData/Xcom/html/xcom1.html'],
-        ['Alizadeh Rahvar et al., Int.J.Radiat.Res. 18(2):381-387, 2020', 'Cf-252 γ/n HVL — MCNPX 시뮬레이션 (Table 2)', 'https://doi.org/10.18869/acadpub.ijrr.18.2.381'],
+        ['Alizadeh Rahvar et al., Int.J.Radiat.Res. 18(2):381-387, 2020', 'Cf-252 γ/n HVL — MCNPX 시뮬레이션 (Table 2)', 'http://ijrr.com/article-1-2945-en.html'],
         ['El-Khayatt & Abdo, Ann.Nucl.Energy 37(2):218-223, 2009', 'Al/Fe 고속중성자 제거단면적 계산', 'https://doi.org/10.1016/j.anucene.2009.10.022'],
         ['Chapman & Storrs, ORNL AECD-3978, 1955', '중성자 제거단면적 원천 실험 데이터 (LTSF)', ''],
-        ['Hila et al., Rad.Phys.Chem. 205:110655, 2023', 'ENDF/B-VIII.0 기반 MC 교차검증', 'https://doi.org/10.1016/j.radphyschem.2023.110655'],
+        ['Hila et al., Rad.Phys.Chem. 205:110655, 2023', 'ENDF/B-VIII.0 기반 MC 교차검증', 'https://doi.org/10.1016/j.radphyschem.2023.110770'],
         ['ICRP Publication 74, 1996', 'H/Φ 중성자 선량환산계수', 'https://www.icrp.org/publication.asp?id=ICRP%20Publication%2074'],
-        ['Bakr & Sayed, AIP Advances 10:075203, 2020', 'Cf-252 최적 차폐 설계 (Fe+PE+B+Pb)', 'https://doi.org/10.1063/5.0005383'],
+        ['Guembou Shouop et al., AIP Advances 10:075203, 2020', 'Cf-252 최적 차폐 설계 (Fe+PE+B+Pb)', 'https://doi.org/10.1063/1.5144923'],
         ['Kang et al., J Korean Phys Soc 52:1744-1747, 2008', 'Cf-252 차폐 실험, paraffin collimator', 'https://doi.org/10.3938/jkps.52.1744'],
         ['McAlister, Eichrom Technologies', '중성자 차폐 백서 — 감마/중성자 감쇄 특성', 'https://www.eichrom.com/wp-content/uploads/2018/02/neutron-attenuation-white-paper-by-d-m-rev-2-1.pdf'],
         ['Nuclear-Power.com', 'HVL 참조 테이블 (Al, Fe 교차검증)', 'https://www.nuclear-power.com/nuclear-power/reactor-physics/interaction-radiation-matter/interaction-gamma-radiation-matter/gamma-ray-attenuation/half-value-layer/'],

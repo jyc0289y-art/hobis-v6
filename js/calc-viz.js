@@ -683,7 +683,7 @@ function generateFullRefHTML(forPDF) {
          'ΣR/ρ 합의값=0.0245±0.001 cm²/g → HVL=10.5±0.3cm | 검증: Chapman & Storrs 1955(ORNL)=0.0245, Chilton/Shultis/Faw 1984=0.0245, Kaplan 1989=0.0245, Shultis & Faw 2000=0.0245, Hila et al. 2023(ENDF/B-VIII.0 MC)=0.0234(~5%dev), Phy-X/PSD=0.0245'],
         ['Fe n-HVL (Cf-252)',
          'El-Khayatt & Abdo 2009 + 교차검증 + Cf-252 특화 연구',
-         'ΣR/ρ 합의값=0.0198±0.001 cm²/g → HVL=4.4±0.2cm | 검증: Chapman & Storrs 1955=0.01984, Shultis & Faw 2000=0.01984, Hila 2023(MC)=0.0191(~4%dev) | Bakr & Sayed 2020 (AIP Advances): Fe를 Cf-252 1차 차폐층으로 권장 (고속중성자 비탄성산란)'],
+         'ΣR/ρ 합의값=0.0198±0.001 cm²/g → HVL=4.4±0.2cm | 검증: Chapman & Storrs 1955=0.01984, Shultis & Faw 2000=0.01984, Hila 2023(MC)=0.0191(~4%dev) | Guembou Shouop et al. 2020 (AIP Advances): Fe를 Cf-252 1차 차폐층으로 권장 (고속중성자 비탄성산란)'],
     ];
     validations.forEach(v => {
         html += `<tr><td ${td}>${v[0]}</td><td ${td} style="font-size:${forPDF?'8px':'0.55rem'};">${v[1]}</td><td ${td} style="font-size:${forPDF?'8px':'0.55rem'};color:${noteColor};">${v[2]}</td></tr>`;
@@ -701,7 +701,7 @@ function generateFullRefHTML(forPDF) {
         'Chapman & Storrs, ORNL AECD-3978, 1955 — 중성자 제거단면적 원천 실험 데이터',
         'Hila et al., Rad.Phys.Chem. 2023 — ENDF/B-VIII.0 MC 교차검증',
         'ICRP 74 — H/Φ 중성자 선량환산계수',
-        'Bakr & Sayed, AIP Advances 10:075203, 2020 — Cf-252 최적 차폐 설계',
+        'Guembou Shouop et al., AIP Advances 10:075203, 2020 — Cf-252 최적 차폐 설계',
     ];
     html += `<div style="font-size:${forPDF?'9px':'0.6rem'};color:${txtColor};line-height:1.5;">`;
     refs.forEach((r, i) => { html += `[${i+1}] ${r}<br>`; });

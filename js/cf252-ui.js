@@ -772,14 +772,14 @@ function cf252ShowDoseResult(result, limit, pass) {
                 <div class="spec-row"><span class="spec-key">γ Water/PE/Paraffin/Al/Fe</span><span class="spec-val">NIST XCOM — HVL=ln2/(μ/ρ×ρ) @1MeV</span></div>
                 <div class="spec-row"><span class="spec-key">n PE/Pb/Conc/Water</span><span class="spec-val">Alizadeh Rahvar 2020, Table 2 (MCNPX separate neutron)</span></div>
                 <div class="spec-row"><span class="spec-key">n Al</span><span class="spec-val">El-Khayatt & Abdo 2009: ΣR/ρ=0.0245 → 10.5cm (7문헌 교차검증)</span></div>
-                <div class="spec-row"><span class="spec-key">n Fe</span><span class="spec-val">El-Khayatt & Abdo 2009: ΣR/ρ=0.0198 → 4.4cm (Bakr 2020: Cf-252 1차 차폐 권장)</span></div>
+                <div class="spec-row"><span class="spec-key">n Fe</span><span class="spec-val">El-Khayatt & Abdo 2009: ΣR/ρ=0.0198 → 4.4cm (Guembou Shouop 2020: Cf-252 1차 차폐 권장)</span></div>
             </div>
 
             <div style="font-size:0.75rem; font-weight:bold; color:var(--hobis-cyan); margin:8px 0 4px;">3. 타당성 검증</div>
             <div class="spec-report" style="font-size:0.65rem;">
                 <div class="spec-row"><span class="spec-key">Paraffin n-HVL</span><span class="spec-val">PE 대비 H원자밀도: PE nH=8.13×10²²/cm³, Paraffin nH=8.32×10²²/cm³ → 비율 0.977 → 1.9cm | Kang 2008 (J Korean Phys Soc): paraffin collimator 사용 | McAlister (Eichrom): PE급 차폐재 분류</span></div>
                 <div class="spec-row"><span class="spec-key">Al n-HVL</span><span class="spec-val">ΣR/ρ=0.0245±0.001 — Chapman 1955(ORNL), Chilton 1984, Kaplan 1989, Shultis 2000, Hila 2023(MC) 합의</span></div>
-                <div class="spec-row"><span class="spec-key">Fe n-HVL</span><span class="spec-val">ΣR/ρ=0.0198±0.001 — Chapman 1955, Shultis 2000, Hila 2023 합의 + Bakr 2020 Cf-252 최적설계</span></div>
+                <div class="spec-row"><span class="spec-key">Fe n-HVL</span><span class="spec-val">ΣR/ρ=0.0198±0.001 — Chapman 1955, Shultis 2000, Hila 2023 합의 + Guembou Shouop 2020 Cf-252 최적설계</span></div>
                 <div class="spec-row"><span class="spec-key">Pb γ-HVL</span><span class="spec-val">Alizadeh Rahvar 2020 MCNPX vs NIST XCOM: narrow-beam 차이 10-20% (빌드업 팩터)</span></div>
             </div>
 
@@ -792,7 +792,7 @@ function cf252ShowDoseResult(result, limit, pass) {
                 [5] El-Khayatt & Abdo, Ann.Nucl.Energy 37(2):218-223, 2009 — 중성자 제거단면적<br>
                 [6] Chapman & Storrs, ORNL AECD-3978, 1955 — 중성자 제거단면적 원천 데이터<br>
                 [7] Hila et al., Rad.Phys.Chem. 2023 — ENDF/B-VIII.0 MC 교차검증<br>
-                [8] Bakr & Sayed, AIP Advances 10:075203, 2020 — Cf-252 최적 차폐 설계<br>
+                [8] Guembou Shouop et al., AIP Advances 10:075203, 2020 — Cf-252 최적 차폐 설계<br>
                 [9] Kang et al., J Korean Phys Soc 52:1744-1747, 2008 — Cf-252 차폐 실험<br>
                 [10] McAlister, Eichrom Technologies — 중성자 차폐 백서
             </div>

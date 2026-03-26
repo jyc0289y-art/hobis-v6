@@ -84,7 +84,7 @@ const CF252 = {
                              //   Shultis & Faw 2000: 0.01984 ✓
                              //   Hila et al. 2023 (MC): 0.0191 (~4% dev) ✓
                              //   → 합의값: 0.0198±0.001 → HVL=4.4±0.2cm
-                             //   Bakr & Sayed 2020 (AIP Advances): Fe를 Cf-252 1차 차폐층으로 권장
+                             //   Guembou Shouop et al. 2020 (AIP Advances): Fe를 Cf-252 1차 차폐층으로 권장
     },
     HVL_REF: 'Alizadeh Rahvar et al., IJRR 18(2):381-387, 2020',
 
