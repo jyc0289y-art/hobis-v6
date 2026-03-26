@@ -672,12 +672,18 @@ function generateFullRefHTML(forPDF) {
     html += `<div style="font-size:${forPDF?'11px':'0.75rem'};font-weight:bold;color:${secColor};margin:10px 0 4px;">3. 데이터 타당성 검증</div>`;
     html += `<table ${tbl}><tr><td ${th}>항목</td><td ${th}>검증 방법</td><td ${th}>결과</td></tr>`;
     const validations = [
-        ['Pb QSA vs NIST', 'Cs-137 단일선(662keV) 비교', 'NIST 5.5mm vs QSA 6.4mm (-14%) — 빌드업 차이로 설명'],
-        ['Al γ-HVL', 'NIST XCOM μ/ρ 계산 + Nuclear-Power.com 교차검증', '500keV: 계산 3.05cm = 문헌 3.05cm 일치'],
-        ['Fe γ-HVL', 'NIST XCOM + NDT 산업 표준 비교', 'Ir-192 NIST 8.5mm vs QSA Steel 13mm — broad/narrow 차이'],
-        ['Paraffin n-HVL', 'PE 대비 H원자밀도 비교', 'PE nH=8.13e22 vs Paraffin nH=8.32e22/cm³ → 비율 0.977 → 1.9cm'],
-        ['Al n-HVL (Cf-252)', 'El-Khayatt 2009 + 7개 문헌 교차검증', 'ΣR/ρ=0.0245±0.001 (1955-2023 합의) → 10.5cm'],
-        ['Fe n-HVL (Cf-252)', 'El-Khayatt 2009 + 교차검증', 'ΣR/ρ=0.0198±0.001 → 4.4cm, Bakr 2020: Cf-252 1차 차폐 권장'],
+        ['Pb QSA vs NIST', 'Cs-137 단일선(662keV) 비교', 'NIST 5.5mm vs QSA 6.4mm (-14%) — 빌드업 차이로 설명됨'],
+        ['Al γ-HVL', 'NIST XCOM μ/ρ×ρ 계산 + Nuclear-Power.com 교차검증', '500keV Al: 계산 3.05cm = Nuclear-Power.com 3.05cm 일치'],
+        ['Fe γ-HVL', 'NIST XCOM + NDT 산업 표준(NDE-Ed.org) 비교', 'Ir-192 NIST 8.5mm vs QSA Steel 13mm — broad/narrow 차이로 설명'],
+        ['Paraffin n-HVL',
+         'PE 대비 H원자밀도 정량 비교 + 문헌 확인',
+         'PE(C₂H₄)ₙ: H wt%=14.37%, ρ=0.94 → nH=8.13×10²²/cm³ | Paraffin(C₂₅H₅₂): H wt%=14.86%, ρ=0.93 → nH=8.32×10²²/cm³ | 비율 0.977 → HVL=1.85/0.977≈1.9cm | Kang et al. 2008 (J Korean Phys Soc 52:1744): paraffin collimator 사용 | McAlister (Eichrom): 파라핀=PE급 수소함유 차폐재 분류'],
+        ['Al n-HVL (Cf-252)',
+         'El-Khayatt & Abdo 2009 + 7개 문헌 교차검증 (1955-2023)',
+         'ΣR/ρ 합의값=0.0245±0.001 cm²/g → HVL=10.5±0.3cm | 검증: Chapman & Storrs 1955(ORNL)=0.0245, Chilton/Shultis/Faw 1984=0.0245, Kaplan 1989=0.0245, Shultis & Faw 2000=0.0245, Hila et al. 2023(ENDF/B-VIII.0 MC)=0.0234(~5%dev), Phy-X/PSD=0.0245'],
+        ['Fe n-HVL (Cf-252)',
+         'El-Khayatt & Abdo 2009 + 교차검증 + Cf-252 특화 연구',
+         'ΣR/ρ 합의값=0.0198±0.001 cm²/g → HVL=4.4±0.2cm | 검증: Chapman & Storrs 1955=0.01984, Shultis & Faw 2000=0.01984, Hila 2023(MC)=0.0191(~4%dev) | Bakr & Sayed 2020 (AIP Advances): Fe를 Cf-252 1차 차폐층으로 권장 (고속중성자 비탄성산란)'],
     ];
     validations.forEach(v => {
         html += `<tr><td ${td}>${v[0]}</td><td ${td} style="font-size:${forPDF?'8px':'0.55rem'};">${v[1]}</td><td ${td} style="font-size:${forPDF?'8px':'0.55rem'};color:${noteColor};">${v[2]}</td></tr>`;

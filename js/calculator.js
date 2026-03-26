@@ -154,13 +154,11 @@ function calculate() {
                     </div>`;
             }
         } catch(e) { console.warn('SVG diagram error:', e); }
-        // 전체 레퍼런스 (접이식)
+        // 전체 레퍼런스 (항상 펼침)
         const fullRefHTML = (typeof generateFullRefHTML === 'function') ? generateFullRefHTML(false) : '';
         const refSectionHTML = `<div style="margin-top:10px; border-top:1px dashed var(--hobis-border); padding-top:6px;">
-            <details>
-                <summary style="cursor:pointer; font-size:0.75rem; font-weight:bold; color:var(--hobis-cyan);">DATA REFERENCE — ${hvlSrcLabel} ▸</summary>
-                <div style="margin-top:6px;">${fullRefHTML}</div>
-            </details>
+            <div style="font-size:0.75rem; font-weight:bold; color:var(--hobis-cyan); margin-bottom:6px;">DATA REFERENCE — ${hvlSrcLabel}</div>
+            ${fullRefHTML}
         </div>`;
         document.getElementById('specReportBox').innerHTML = `<div class="spec-report">${reportSpecHTML}</div>` + refSectionHTML + shieldDiagramHTML;
 
@@ -221,7 +219,7 @@ function calculate() {
                     addToLog(entry);
 
                     const revFullRef = (typeof generateFullRefHTML === 'function') ? generateFullRefHTML(false) : '';
-                    document.getElementById('specReportBox').innerHTML = `<div class="spec-report"><div class="spec-row"><span class="spec-key">${n.id}:</span> <span class="spec-val">Γ=${n.gamma} mSv·m²/h·Ci</span></div><div class="spec-row"><span class="spec-key">${mat} HVL:</span> <span class="spec-val">${h}mm</span></div></div><div style="margin-top:10px; border-top:1px dashed var(--hobis-border); padding-top:6px;"><details><summary style="cursor:pointer; font-size:0.75rem; font-weight:bold; color:var(--hobis-cyan);">DATA REFERENCE — ${revHvlLabel} ▸</summary><div style="margin-top:6px;">${revFullRef}</div></details></div>`;
+                    document.getElementById('specReportBox').innerHTML = `<div class="spec-report"><div class="spec-row"><span class="spec-key">${n.id}:</span> <span class="spec-val">Γ=${n.gamma} mSv·m²/h·Ci</span></div><div class="spec-row"><span class="spec-key">${mat} HVL:</span> <span class="spec-val">${h}mm</span></div></div><div style="margin-top:10px; border-top:1px dashed var(--hobis-border); padding-top:6px;"><div style="font-size:0.75rem; font-weight:bold; color:var(--hobis-cyan); margin-bottom:6px;">DATA REFERENCE — ${revHvlLabel}</div>${revFullRef}</div>`;
 
                     const L = [], D = [];
                     const yAxisLabel = document.getElementById('targetType').value === 'dose'

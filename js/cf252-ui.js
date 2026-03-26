@@ -751,6 +751,50 @@ function cf252ShowDoseResult(result, limit, pass) {
                 <div class="spec-row"><span class="spec-key">HVL n Conc</span><span class="spec-val">${CF252.HVL_NEUTRON.Concrete} cm</span></div>
                 <div class="spec-row"><span class="spec-key">HVL n Water</span><span class="spec-val">${CF252.HVL_NEUTRON.Water} cm</span></div>
                 <div class="spec-row"><span class="spec-key">HVL n Paraffin</span><span class="spec-val">${CF252.HVL_NEUTRON.Paraffin} cm</span></div>
+                <div class="spec-row"><span class="spec-key">HVL n Al</span><span class="spec-val">${CF252.HVL_NEUTRON.Al} cm</span></div>
+                <div class="spec-row"><span class="spec-key">HVL n Fe</span><span class="spec-val">${CF252.HVL_NEUTRON.Iron} cm</span></div>
+            </div>
+        </div>
+
+        <div class="cf252-ref-section">
+            <div class="header" style="border:none; font-size:0.85rem; color:var(--hobis-cyan);">DATA REFERENCE</div>
+
+            <div style="font-size:0.75rem; font-weight:bold; color:var(--hobis-cyan); margin:8px 0 4px;">1. Cf-252 핵데이터 출처</div>
+            <div class="spec-report">
+                <div class="spec-row"><span class="spec-key">감마상수 Γ_γ</span><span class="spec-val">Smith & Stabin 2012 (ICRP-107): 2.31 R·cm²/(mCi·h)</span></div>
+                <div class="spec-row"><span class="spec-key">중성자 H/Φ</span><span class="spec-val">ICRP 74: 332.9 pSv·cm²/n (fission spectrum avg)</span></div>
+                <div class="spec-row"><span class="spec-key">R→mSv 환산</span><span class="spec-val">1R = 1cGy = 10mSv (단순환산)</span></div>
+            </div>
+
+            <div style="font-size:0.75rem; font-weight:bold; color:var(--hobis-cyan); margin:8px 0 4px;">2. HVL 출처</div>
+            <div class="spec-report">
+                <div class="spec-row"><span class="spec-key">γ Pb/Concrete</span><span class="spec-val">Alizadeh Rahvar et al., IJRR 18(2):381-387, 2020 (MCNPX, Table 2)</span></div>
+                <div class="spec-row"><span class="spec-key">γ Water/PE/Paraffin/Al/Fe</span><span class="spec-val">NIST XCOM — HVL=ln2/(μ/ρ×ρ) @1MeV</span></div>
+                <div class="spec-row"><span class="spec-key">n PE/Pb/Conc/Water</span><span class="spec-val">Alizadeh Rahvar 2020, Table 2 (MCNPX separate neutron)</span></div>
+                <div class="spec-row"><span class="spec-key">n Al</span><span class="spec-val">El-Khayatt & Abdo 2009: ΣR/ρ=0.0245 → 10.5cm (7문헌 교차검증)</span></div>
+                <div class="spec-row"><span class="spec-key">n Fe</span><span class="spec-val">El-Khayatt & Abdo 2009: ΣR/ρ=0.0198 → 4.4cm (Bakr 2020: Cf-252 1차 차폐 권장)</span></div>
+            </div>
+
+            <div style="font-size:0.75rem; font-weight:bold; color:var(--hobis-cyan); margin:8px 0 4px;">3. 타당성 검증</div>
+            <div class="spec-report" style="font-size:0.65rem;">
+                <div class="spec-row"><span class="spec-key">Paraffin n-HVL</span><span class="spec-val">PE 대비 H원자밀도: PE nH=8.13×10²²/cm³, Paraffin nH=8.32×10²²/cm³ → 비율 0.977 → 1.9cm | Kang 2008 (J Korean Phys Soc): paraffin collimator 사용 | McAlister (Eichrom): PE급 차폐재 분류</span></div>
+                <div class="spec-row"><span class="spec-key">Al n-HVL</span><span class="spec-val">ΣR/ρ=0.0245±0.001 — Chapman 1955(ORNL), Chilton 1984, Kaplan 1989, Shultis 2000, Hila 2023(MC) 합의</span></div>
+                <div class="spec-row"><span class="spec-key">Fe n-HVL</span><span class="spec-val">ΣR/ρ=0.0198±0.001 — Chapman 1955, Shultis 2000, Hila 2023 합의 + Bakr 2020 Cf-252 최적설계</span></div>
+                <div class="spec-row"><span class="spec-key">Pb γ-HVL</span><span class="spec-val">Alizadeh Rahvar 2020 MCNPX vs NIST XCOM: narrow-beam 차이 10-20% (빌드업 팩터)</span></div>
+            </div>
+
+            <div style="font-size:0.75rem; font-weight:bold; color:var(--hobis-cyan); margin:8px 0 4px;">4. 참조 문헌</div>
+            <div style="font-size:0.6rem; color:#8fa3b0; line-height:1.5;">
+                [1] Smith & Stabin (2012), ICRP-107 — Cf-252 감마상수<br>
+                [2] ICRP 74 — 중성자 선량환산계수 H/Φ<br>
+                [3] Alizadeh Rahvar et al., Int.J.Radiat.Res. 18(2):381-387, 2020 — Cf-252 γ/n HVL (MCNPX)<br>
+                [4] NIST XCOM Photon Cross Sections DB — γ질량감쇄계수<br>
+                [5] El-Khayatt & Abdo, Ann.Nucl.Energy 37(2):218-223, 2009 — 중성자 제거단면적<br>
+                [6] Chapman & Storrs, ORNL AECD-3978, 1955 — 중성자 제거단면적 원천 데이터<br>
+                [7] Hila et al., Rad.Phys.Chem. 2023 — ENDF/B-VIII.0 MC 교차검증<br>
+                [8] Bakr & Sayed, AIP Advances 10:075203, 2020 — Cf-252 최적 차폐 설계<br>
+                [9] Kang et al., J Korean Phys Soc 52:1744-1747, 2008 — Cf-252 차폐 실험<br>
+                [10] McAlister, Eichrom Technologies — 중성자 차폐 백서
             </div>
         </div>`;
 }
