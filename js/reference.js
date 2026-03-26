@@ -98,16 +98,18 @@ function refRender() {
 
     // ===== 2.4 Al 감마 HVL 검증 =====
     html += `<div ${S.h3}>2.4 Aluminum 감마 HVL 검증</div>`;
+    html += `<div ${S.note}>μ/ρ는 NIST XCOM 인접 에너지 데이터를 선형보간하여 산출. HOBIS 값은 계산 HVL을 <b>정수 mm로 반올림</b>하여 일관 적용.</div>`;
     html += `<table ${S.tbl}>
-        <tr><td ${S.th}>에너지</td><td ${S.th}>핵종</td><td ${S.th}>NIST μ/ρ (cm²/g)</td><td ${S.th}>계산 HVL (mm)</td><td ${S.th}>HOBIS 값 (mm)</td><td ${S.th}>교차검증</td></tr>
-        <tr><td ${S.td}>93 keV</td><td ${S.td}>Yb-169</td><td ${S.td}>0.170</td><td ${S.td}>15.1</td><td ${S.td}>15</td><td ${S.tdn}>일치</td></tr>
-        <tr><td ${S.td}>215 keV</td><td ${S.td}>Se-75</td><td ${S.td}>0.120</td><td ${S.td}>21.4</td><td ${S.td}>21</td><td ${S.tdn}>일치</td></tr>
-        <tr><td ${S.td}>370 keV</td><td ${S.td}>Ir-192</td><td ${S.td}>0.096</td><td ${S.td}>26.8</td><td ${S.td}>27</td><td ${S.tdn}>일치</td></tr>
-        <tr><td ${S.td}>500 keV</td><td ${S.td}>-</td><td ${S.td}>0.084</td><td ${S.td}>30.5</td><td ${S.td}>-</td><td ${S.tdn}><a ${S.link} href="https://www.nuclear-power.com/nuclear-power/reactor-physics/interaction-radiation-matter/interaction-gamma-radiation-matter/gamma-ray-attenuation/half-value-layer/">Nuclear-Power.com</a>: 3.05cm 일치</td></tr>
-        <tr><td ${S.td}>662 keV</td><td ${S.td}>Cs-137</td><td ${S.td}>0.0775</td><td ${S.td}>33.1</td><td ${S.td}>34</td><td ${S.tdn}>근사 일치 (+3%)</td></tr>
-        <tr><td ${S.td}>1.25 MeV</td><td ${S.td}>Co-60</td><td ${S.td}>0.055</td><td ${S.td}>46.7</td><td ${S.td}>47</td><td ${S.tdn}>일치</td></tr>
+        <tr><td ${S.th}>에너지</td><td ${S.th}>핵종</td><td ${S.th}>NIST μ/ρ 보간값</td><td ${S.th}>보간 구간</td><td ${S.th}>계산 HVL</td><td ${S.th}>HOBIS (mm)</td><td ${S.th}>반올림</td></tr>
+        <tr><td ${S.td}>93 keV</td><td ${S.td}>Yb-169</td><td ${S.td}>0.1766</td><td ${S.tdn}>80keV(0.1882)~100keV(0.1704)</td><td ${S.td}>14.5mm</td><td ${S.td}>15</td><td ${S.tdn}>↑ 반올림</td></tr>
+        <tr><td ${S.td}>215 keV</td><td ${S.td}>Se-75</td><td ${S.td}>0.1197</td><td ${S.tdn}>200keV(0.1224)~300keV(0.1042)</td><td ${S.td}>21.5mm</td><td ${S.td}>21</td><td ${S.tdn}>↓ 반올림</td></tr>
+        <tr><td ${S.td}>370 keV</td><td ${S.td}>Ir-192</td><td ${S.td}>0.0962</td><td ${S.tdn}>300keV(0.1042)~400keV(0.0928)</td><td ${S.td}>26.7mm</td><td ${S.td}>27</td><td ${S.tdn}>↑ 반올림</td></tr>
+        <tr><td ${S.td}>500 keV</td><td ${S.td}>-</td><td ${S.td}>0.0845</td><td ${S.tdn}>NIST 직접값</td><td ${S.td}>30.5mm</td><td ${S.td}>-</td><td ${S.tdn}><a ${S.link} href="https://www.nuclear-power.com/nuclear-power/reactor-physics/interaction-radiation-matter/interaction-gamma-radiation-matter/gamma-ray-attenuation/half-value-layer/">Nuclear-Power.com</a>: 3.05cm 일치</td></tr>
+        <tr><td ${S.td}>662 keV</td><td ${S.td}>Cs-137</td><td ${S.td}>0.0750</td><td ${S.tdn}>600keV(0.0780)~800keV(0.0684)</td><td ${S.td}>34.2mm</td><td ${S.td}>34</td><td ${S.tdn}>↓ 반올림</td></tr>
+        <tr><td ${S.td}>1.25 MeV</td><td ${S.td}>Co-60</td><td ${S.td}>0.0558</td><td ${S.tdn}>1.0MeV(0.0615)~1.5MeV(0.0501)</td><td ${S.td}>46.0mm</td><td ${S.td}>47</td><td ${S.tdn}>↑ 반올림 (+2%)</td></tr>
     </table>`;
-    html += `<div ${S.note}><b>출처:</b> <a ${S.link} href="https://physics.nist.gov/PhysRefData/XrayMassCoef/ElemTab/z13.html">NIST XCOM Aluminum (Z=13)</a></div>`;
+    html += `<div ${S.note}><b>방법론:</b> NIST XCOM은 이산 에너지점만 제공하므로, 핵종 평균 에너지에서의 μ/ρ는 인접 데이터점 간 선형보간으로 산출. HVL=ln2/(μ/ρ×2.699). 정수 mm 반올림(±0.5mm, ≤2%)은 실무적으로 유의미하지 않음.<br>
+    <b>출처:</b> <a ${S.link} href="https://physics.nist.gov/PhysRefData/XrayMassCoef/ElemTab/z13.html">NIST XCOM Aluminum (Z=13)</a></div>`;
 
     // ===== 3. 반가층 HVL — 중성자 (Cf-252) =====
     html += `<div ${S.h2}>3. 반가층 HVL — 중성자 (Cf-252 Fission Spectrum)</div>`;
