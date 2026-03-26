@@ -280,6 +280,7 @@ function cf252AddShield() {
                     <option value="PE">폴리에틸렌 (PE)</option>
                     <option value="Water">물</option>
                     <option value="Paraffin">파라핀</option>
+                    <option value="Al">알루미늄 (Al)</option>
                 </select>
             </div>
             <div style="flex:1">

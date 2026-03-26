@@ -91,7 +91,7 @@ function addSourceRow() {
     updateRowSpec(div.querySelector('.src-select'));
 }
 
-const SHIELD_MAT_OPTIONS = '<option value="Lead">Lead</option><option value="LeadGlass">Lead Glass</option><option value="Concrete">Concrete</option><option value="Steel">Steel</option><option value="Water">Water</option><option value="Polyethylene">Polyethylene</option><option value="Paraffin">Paraffin</option><option value="Tungsten">W</option><option value="DU">DU</option>';
+const SHIELD_MAT_OPTIONS = '<option value="Lead">Lead</option><option value="LeadGlass">Lead Glass</option><option value="Concrete">Concrete</option><option value="Steel">Steel</option><option value="Aluminum">Aluminum</option><option value="Water">Water</option><option value="Polyethylene">Polyethylene</option><option value="Paraffin">Paraffin</option><option value="Tungsten">W</option><option value="DU">DU</option>';
 
 // 차폐 프리셋 (다층 구성)
 const SHIELD_PRESETS = [

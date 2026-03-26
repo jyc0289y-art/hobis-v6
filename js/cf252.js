@@ -50,6 +50,7 @@ const CF252 = {
         'Water': 10.0,       // μ/ρ≈0.0707 cm²/g @1MeV, ρ=1.0 → HVL≈9.8cm (보수적 10cm)
         'Paraffin': 11.0,    // μ/ρ≈0.065 cm²/g @1MeV, ρ=0.9 → HVL≈11cm
         'PE': 10.6,          // μ/ρ≈0.0707 cm²/g @1MeV, ρ=0.94 → HVL≈10.6cm
+        'Al': 4.2,           // μ/ρ≈0.0614 cm²/g @1MeV, ρ=2.7 → HVL≈4.2cm (NIST XCOM)
     },
     HVL_NEUTRON: {
         'PE': 1.85,          // Table 2: separate neutron = 1.85cm
@@ -57,6 +58,7 @@ const CF252 = {
         'Concrete': 3.03,    // Table 2: separate neutron = 3.03cm
         'Water': 2.16,       // Table 2: separate neutron = 2.16cm
         'Paraffin': 1.9,     // H밀도 8.0e22/cm³ (PE와 유사) → HVL≈1.9cm
+        'Al': 5.5,           // 알루미늄 중성자 HVL ≈5.5cm (대표값, 감속효과 낮음)
     },
     HVL_REF: 'Alizadeh Rahvar et al., IJRR 18(2):381-387, 2020',
 

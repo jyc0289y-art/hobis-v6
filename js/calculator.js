@@ -139,7 +139,7 @@ function calculate() {
             }
         } catch(e) { console.warn('SVG diagram error:', e); }
         // HVL 출처 정보
-        const hvlRefMap = { 'Lead': 'QSA MAN-027 T7', 'Steel': 'QSA MAN-027 T7', 'Concrete': 'QSA MAN-027 T7', 'Tungsten': 'QSA MAN-027 T7', 'DU': 'QSA MAN-027 T7', 'LeadGlass': '대표값(ρ≈3.3,Pb30%)', 'Water': 'NIST XCOM', 'Polyethylene': 'NIST XCOM', 'Paraffin': 'NIST XCOM' };
+        const hvlRefMap = { 'Lead': 'QSA MAN-027 T7', 'Steel': 'QSA MAN-027 T7', 'Concrete': 'QSA MAN-027 T7', 'Tungsten': 'QSA MAN-027 T7', 'DU': 'QSA MAN-027 T7', 'LeadGlass': '대표값(ρ≈3.3,Pb30%)', 'Water': 'NIST XCOM', 'Polyethylene': 'NIST XCOM', 'Paraffin': 'NIST XCOM', 'Aluminum': 'NIST XCOM' };
         const usedMats = [...new Set(lays.map(l => l.m))];
         const hvlRefs = usedMats.map(m => `${m}: ${hvlRefMap[m] || 'N/A'}`).join(', ');
         const hvlRefHTML = `<div style="margin-top:8px; padding:4px 8px; border-top:1px dashed var(--hobis-border); font-size:0.65rem; color:#5f7481;">📋 HVL Ref: ${hvlRefs}</div>`;
@@ -201,7 +201,7 @@ function calculate() {
                     addToLog(entry);
 
                     // Spec Report Injection (PATCH 3) + HVL 출처
-                    const revHvlRefMap = { 'Lead': 'QSA MAN-027 T7', 'Steel': 'QSA MAN-027 T7', 'Concrete': 'QSA MAN-027 T7', 'Tungsten': 'QSA MAN-027 T7', 'DU': 'QSA MAN-027 T7', 'LeadGlass': '대표값(ρ≈3.3,Pb30%)', 'Water': 'NIST XCOM', 'Polyethylene': 'NIST XCOM', 'Paraffin': 'NIST XCOM' };
+                    const revHvlRefMap = { 'Lead': 'QSA MAN-027 T7', 'Steel': 'QSA MAN-027 T7', 'Concrete': 'QSA MAN-027 T7', 'Tungsten': 'QSA MAN-027 T7', 'DU': 'QSA MAN-027 T7', 'LeadGlass': '대표값(ρ≈3.3,Pb30%)', 'Water': 'NIST XCOM', 'Polyethylene': 'NIST XCOM', 'Paraffin': 'NIST XCOM', 'Aluminum': 'NIST XCOM' };
                     document.getElementById('specReportBox').innerHTML = `<div class="spec-report"><div class="spec-row"><span class="spec-key">${n.id}:</span> <span class="spec-val">Γ=${n.gamma} mSv·m²/h·Ci</span></div><div class="spec-row"><span class="spec-key">${mat} HVL:</span> <span class="spec-val">${h}mm</span></div></div><div style="margin-top:8px; padding:4px 8px; border-top:1px dashed var(--hobis-border); font-size:0.65rem; color:#5f7481;">📋 HVL Ref: ${revHvlRefMap[mat] || 'N/A'}</div>`;
 
                     const L = [], D = [];

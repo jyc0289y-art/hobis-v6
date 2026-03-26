@@ -33,7 +33,8 @@ const GLOBAL_DB = {
                 "LeadGlass": 14.0,// 납유리(ρ≈3.3, Pb30%) 대표값
                 "Water": 48.0,    // NIST XCOM @370keV avg, ρ=1.0
                 "Polyethylene": 51.0, // NIST XCOM @370keV, ρ=0.94
-                "Paraffin": 52.0  // NIST XCOM @370keV, ρ=0.93
+                "Paraffin": 52.0, // NIST XCOM @370keV, ρ=0.93
+                "Aluminum": 22.0  // NIST XCOM @370keV, ρ=2.7
             }
         },
         {
@@ -49,7 +50,8 @@ const GLOBAL_DB = {
                 "LeadGlass": 2.8, // 납유리 대표값
                 "Water": 38.0,    // NIST XCOM @215keV avg, ρ=1.0
                 "Polyethylene": 40.0, // NIST XCOM @215keV, ρ=0.94
-                "Paraffin": 41.0  // NIST XCOM @215keV, ρ=0.93
+                "Paraffin": 41.0, // NIST XCOM @215keV, ρ=0.93
+                "Aluminum": 15.0  // NIST XCOM @215keV, ρ=2.7
             }
         },
         {
@@ -65,7 +67,8 @@ const GLOBAL_DB = {
                 "LeadGlass": 2.2, // 납유리 대표값
                 "Water": 35.0,    // NIST XCOM @93keV avg, ρ=1.0
                 "Polyethylene": 37.0, // NIST XCOM @93keV, ρ=0.94
-                "Paraffin": 38.0  // NIST XCOM @93keV, ρ=0.93
+                "Paraffin": 38.0, // NIST XCOM @93keV, ρ=0.93
+                "Aluminum": 8.0   // NIST XCOM @93keV, ρ=2.7
             }
         },
         {
@@ -81,7 +84,8 @@ const GLOBAL_DB = {
                 "LeadGlass": 33.0,// 납유리 대표값
                 "Water": 111.0,   // NIST XCOM @1.25MeV, ρ=1.0
                 "Polyethylene": 118.0, // NIST XCOM @1.25MeV, ρ=0.94
-                "Paraffin": 119.0 // NIST XCOM @1.25MeV, ρ=0.93
+                "Paraffin": 119.0,// NIST XCOM @1.25MeV, ρ=0.93
+                "Aluminum": 44.0  // NIST XCOM @1.25MeV, ρ=2.7
             }
         },
         {
@@ -97,7 +101,8 @@ const GLOBAL_DB = {
                 "LeadGlass": 17.0,// 납유리 대표값
                 "Water": 87.0,    // NIST XCOM @662keV, ρ=1.0
                 "Polyethylene": 93.0, // NIST XCOM @662keV, ρ=0.94
-                "Paraffin": 94.0  // NIST XCOM @662keV, ρ=0.93
+                "Paraffin": 94.0, // NIST XCOM @662keV, ρ=0.93
+                "Aluminum": 33.0  // NIST XCOM @662keV, ρ=2.7
             }
         }
     ],
