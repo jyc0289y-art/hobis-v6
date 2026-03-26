@@ -51,6 +51,13 @@
                         <option value="ICRP107">ICRP 107</option>
                     </select>
                     <span id="sysStatus" style="color:var(--hobis-green); margin-left:10px;">INIT...</span>
+                    <span id="hvlSourceWrap" style="display:none; margin-left:10px;">
+                        HVL:
+                        <select id="hvlSource" style="width:auto; padding:2px; font-size:0.75rem;">
+                            <option value="qsa">QSA (broad-beam)</option>
+                            <option value="nist">NIST (narrow-beam)</option>
+                        </select>
+                    </span>
                 </div>
                 <div id="decayModeSwitch" class="mode-switch">
                     <div class="mode-opt active" onclick="setSubMode('decay_forward', this)">FORWARD</div>
@@ -305,7 +312,7 @@
 <script src="js/event-form.js"></script>
 <script src="js/import-export.js"></script>
 <script src="js/events.js"></script>
-<script src="js/core.js"></script>
+<script src="js/core.js?v=20260326c"></script>
 <script src="js/utils.js"></script>
 <script src="js/log.js"></script>
 <script src="js/chart.js?v=20260326c"></script>

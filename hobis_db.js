@@ -24,17 +24,13 @@ const GLOBAL_DB = {
             id: "Ir-192",
             hl: 74, unit: "d",    // Manual 1.3: 74 days
             gamma: 4.80,          // Manual Table 6: 0.48 R -> 4.8 mSv
-            hvl: {
-                "Lead": 5.1,      // Manual Table 7: 0.200"
-                "Steel": 13.0,    // Manual Table 7: 0.512"
-                "Concrete": 43.2, // Manual Table 7: 1.700"
-                "Tungsten": 3.3,  // Manual Table 7: 0.130"
-                "DU": 1.3,        // Manual Table 7: 0.050"
-                "LeadGlass": 14.0,// 납유리(ρ≈3.3, Pb30%) 대표값
-                "Water": 48.0,    // NIST XCOM @370keV avg, ρ=1.0
-                "Polyethylene": 51.0, // NIST XCOM @370keV, ρ=0.94
-                "Paraffin": 52.0, // NIST XCOM @370keV, ρ=0.93
-                "Aluminum": 27.0  // NIST XCOM μ/ρ=0.096@370keV, ρ=2.7 → HVL=2.68cm
+            hvl: {                // QSA MAN-027 broad-beam (기본값)
+                "Lead": 5.1, "Steel": 13.0, "Concrete": 43.2, "Tungsten": 3.3, "DU": 1.3,
+                "LeadGlass": 14.0, "Water": 48.0, "Polyethylene": 51.0, "Paraffin": 52.0, "Aluminum": 27.0
+            },
+            hvl_nist: {           // NIST XCOM narrow-beam @370keV avg — HVL=ln2/(μ/ρ×ρ)
+                "Lead": 2.3, "Steel": 8.5, "Concrete": 24.6, "Tungsten": 1.5, "DU": 0.6,
+                "LeadGlass": 7.8, "Water": 63.0, "Polyethylene": 67.0, "Paraffin": 68.0, "Aluminum": 27.0
             }
         },
         {
@@ -42,16 +38,12 @@ const GLOBAL_DB = {
             hl: 120, unit: "d",   // Manual 1.3
             gamma: 2.03,          // Manual Table 6: 0.203 R -> 2.03 mSv
             hvl: {
-                "Lead": 1.0,      // Manual Table 7: 0.039"
-                "Steel": 8.0,     // Manual Table 7: 0.315"
-                "Concrete": 30.0, // Manual Table 7: 1.180"
-                "Tungsten": 0.8,  // Manual Table 7: 0.032"
-                "DU": 0.6,        // Not listed in Table 7 DU row, using calc/approx from density
-                "LeadGlass": 2.8, // 납유리 대표값
-                "Water": 38.0,    // NIST XCOM @215keV avg, ρ=1.0
-                "Polyethylene": 40.0, // NIST XCOM @215keV, ρ=0.94
-                "Paraffin": 41.0, // NIST XCOM @215keV, ρ=0.93
-                "Aluminum": 21.0  // NIST XCOM μ/ρ=0.120@215keV, ρ=2.7 → HVL=2.14cm
+                "Lead": 1.0, "Steel": 8.0, "Concrete": 30.0, "Tungsten": 0.8, "DU": 0.6,
+                "LeadGlass": 2.8, "Water": 38.0, "Polyethylene": 40.0, "Paraffin": 41.0, "Aluminum": 21.0
+            },
+            hvl_nist: {           // NIST XCOM narrow-beam @215keV avg
+                "Lead": 0.7, "Steel": 5.6, "Concrete": 19.0, "Tungsten": 0.4, "DU": 0.3,
+                "LeadGlass": 2.0, "Water": 53.0, "Polyethylene": 56.0, "Paraffin": 57.0, "Aluminum": 21.0
             }
         },
         {
@@ -59,16 +51,12 @@ const GLOBAL_DB = {
             hl: 32, unit: "d",    // Manual 1.3
             gamma: 1.25,          // Manual Table 6: 0.125 R -> 1.25 mSv
             hvl: {
-                "Lead": 0.8,      // Manual Table 7: 0.032"
-                "Steel": 4.3,     // Manual Table 7: 0.170"
-                "Concrete": 29.0, // Manual Table 7: 1.140"
-                "Tungsten": 0.25, // Approx (Not explicitly in W row for Yb)
-                "DU": 0.2,        // Approx
-                "LeadGlass": 2.2, // 납유리 대표값
-                "Water": 35.0,    // NIST XCOM @93keV avg, ρ=1.0
-                "Polyethylene": 37.0, // NIST XCOM @93keV, ρ=0.94
-                "Paraffin": 38.0, // NIST XCOM @93keV, ρ=0.93
-                "Aluminum": 15.0  // NIST XCOM μ/ρ=0.170@93keV, ρ=2.7 → HVL=1.51cm
+                "Lead": 0.8, "Steel": 4.3, "Concrete": 29.0, "Tungsten": 0.25, "DU": 0.2,
+                "LeadGlass": 2.2, "Water": 35.0, "Polyethylene": 37.0, "Paraffin": 38.0, "Aluminum": 15.0
+            },
+            hvl_nist: {           // NIST XCOM narrow-beam @93keV avg
+                "Lead": 0.09, "Steel": 2.0, "Concrete": 14.0, "Tungsten": 0.06, "DU": 0.04,
+                "LeadGlass": 0.3, "Water": 40.0, "Polyethylene": 42.0, "Paraffin": 43.0, "Aluminum": 15.0
             }
         },
         {
@@ -76,16 +64,12 @@ const GLOBAL_DB = {
             hl: 5.27, unit: "y",
             gamma: 13.0,          // Manual Table 6: 1.30 R -> 13.0 mSv
             hvl: {
-                "Lead": 12.7,     // Manual Table 7: 0.500"
-                "Steel": 21.0,    // Manual Table 7: 0.827"
-                "Concrete": 61.0, // Manual Table 7: 2.400"
-                "Tungsten": 7.9,  // Manual Table 7: 0.310"
-                "DU": 6.8,        // Manual Table 7: 0.270"
-                "LeadGlass": 33.0,// 납유리 대표값
-                "Water": 111.0,   // NIST XCOM @1.25MeV, ρ=1.0
-                "Polyethylene": 118.0, // NIST XCOM @1.25MeV, ρ=0.94
-                "Paraffin": 119.0,// NIST XCOM @1.25MeV, ρ=0.93
-                "Aluminum": 47.0  // NIST XCOM μ/ρ=0.055@1.25MeV, ρ=2.7 → HVL=4.67cm
+                "Lead": 12.7, "Steel": 21.0, "Concrete": 61.0, "Tungsten": 7.9, "DU": 6.8,
+                "LeadGlass": 33.0, "Water": 111.0, "Polyethylene": 118.0, "Paraffin": 119.0, "Aluminum": 47.0
+            },
+            hvl_nist: {           // NIST XCOM narrow-beam @1.25MeV avg
+                "Lead": 10.4, "Steel": 16.4, "Concrete": 49.0, "Tungsten": 6.3, "DU": 5.4,
+                "LeadGlass": 27.0, "Water": 108.0, "Polyethylene": 115.0, "Paraffin": 116.0, "Aluminum": 47.0
             }
         },
         {
@@ -93,16 +77,12 @@ const GLOBAL_DB = {
             hl: 30.0, unit: "y",
             gamma: 3.20,          // Manual Table 6: 0.32 R -> 3.20 mSv
             hvl: {
-                "Lead": 6.4,      // Manual Table 7: 0.250"
-                "Steel": 22.9,    // Manual Table 7: 0.900"
-                "Concrete": 76.2, // Manual Table 7: 3.00"
-                "Tungsten": 5.7,  // Manual Table 7: 0.225"
-                "DU": 3.2,        // Manual Table 7: 0.125"
-                "LeadGlass": 17.0,// 납유리 대표값
-                "Water": 87.0,    // NIST XCOM @662keV, ρ=1.0
-                "Polyethylene": 93.0, // NIST XCOM @662keV, ρ=0.94
-                "Paraffin": 94.0, // NIST XCOM @662keV, ρ=0.93
-                "Aluminum": 34.0  // NIST XCOM μ/ρ=0.0775@662keV, ρ=2.7 → HVL=3.31cm
+                "Lead": 6.4, "Steel": 22.9, "Concrete": 76.2, "Tungsten": 5.7, "DU": 3.2,
+                "LeadGlass": 17.0, "Water": 87.0, "Polyethylene": 93.0, "Paraffin": 94.0, "Aluminum": 34.0
+            },
+            hvl_nist: {           // NIST XCOM narrow-beam @662keV
+                "Lead": 5.5, "Steel": 11.2, "Concrete": 35.0, "Tungsten": 4.5, "DU": 2.5,
+                "LeadGlass": 14.5, "Water": 80.0, "Polyethylene": 85.0, "Paraffin": 86.0, "Aluminum": 34.0
             }
         }
     ],

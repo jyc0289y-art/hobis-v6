@@ -157,4 +157,7 @@ function setSubMode(m, e) {
     renderInputs();
     document.getElementById('reportEmpty').classList.remove('hidden');
     document.getElementById('resultBox').classList.add('hidden');
+    // SHIELD 모드일 때만 HVL 소스 토글 표시
+    const hvlWrap = document.getElementById('hvlSourceWrap');
+    if (hvlWrap) hvlWrap.style.display = m.startsWith('shield') ? 'inline' : 'none';
 }

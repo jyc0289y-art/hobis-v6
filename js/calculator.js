@@ -1,6 +1,21 @@
 // --- HOBIS CALCULATOR ENGINE ---
 // Main calculate() function for all 4 modes
 
+// HVL 소스 선택: QSA(broad-beam) vs NIST(narrow-beam)
+function getHVL(nuc, mat) {
+    const sel = document.getElementById('hvlSource');
+    const useNist = sel && sel.value === 'nist';
+    if (useNist && nuc.hvl_nist && nuc.hvl_nist[mat] !== undefined) {
+        return nuc.hvl_nist[mat];
+    }
+    return (nuc.hvl && nuc.hvl[mat]) ? nuc.hvl[mat] : 0;
+}
+
+function getHVLSourceLabel() {
+    const sel = document.getElementById('hvlSource');
+    return (sel && sel.value === 'nist') ? 'NIST XCOM (narrow-beam)' : 'QSA MAN-027 (broad-beam)';
+}
+
 function calculate() {
     document.getElementById('reportEmpty').classList.add('hidden');
     document.getElementById('resultBox').classList.remove('hidden');
@@ -99,11 +114,12 @@ function calculate() {
             lays.push({ m: m, t: t });
         });
 
+        const hvlSrcLabel = getHVLSourceLabel();
         let totalRes = 0;
         srcs.forEach(s => {
             let trans = 1.0;
             lays.forEach(l => {
-                let h = (s.n.hvl && s.n.hvl[l.m]) ? s.n.hvl[l.m] : (l.m === 'Lead' ? s.n.hvl['Lead'] : 0);
+                let h = getHVL(s.n, l.m);
                 if (h > 0) trans *= Math.pow(0.5, l.t / h);
                 reportSpecHTML += `<div class="spec-row"><span class="spec-key">${l.m} HVL (${s.n.id})</span> <span class="spec-val">${h}mm</span></div>`;
             });
@@ -157,9 +173,9 @@ function calculate() {
             return `<div class="spec-row" style="font-size:0.65rem;"><span class="spec-key" style="color:#5f7481;">${m}</span> <span class="spec-val" style="color:#5f7481;">${r.src} (${r.method})</span></div>`;
         }).join('');
         const hvlRefHTML = `<div style="margin-top:8px; padding:6px 8px; border-top:1px dashed var(--hobis-border);">
-            <div style="font-size:0.7rem; font-weight:bold; color:#5f7481; margin-bottom:3px;">HVL REFERENCE</div>
+            <div style="font-size:0.7rem; font-weight:bold; color:#5f7481; margin-bottom:3px;">HVL REFERENCE — <span style="color:var(--hobis-cyan);">${hvlSrcLabel}</span></div>
             ${hvlRefRows}
-            <div style="font-size:0.6rem; color:#4a5a64; margin-top:4px;">Narrow-beam HVL (NIST) vs QSA broad-beam: 10~20% 차이는 빌드업 팩터로 설명됨</div>
+            <div style="font-size:0.6rem; color:#4a5a64; margin-top:4px;">QSA: broad-beam(빌드업 포함, 보수적) | NIST: narrow-beam(이론값, HVL=ln2/(μ/ρ×ρ))</div>
         </div>`;
         document.getElementById('specReportBox').innerHTML = `<div class="spec-report">${reportSpecHTML}</div>` + hvlRefHTML + shieldDiagramHTML;
 
@@ -172,10 +188,10 @@ function calculate() {
                 let x = i * (maxThk / 100), sum = 0;
                 L.push(x.toFixed(1));
                 srcs.forEach(s => {
-                    let tr = 1.0, h1 = (s.n.hvl && s.n.hvl[pm]) ? s.n.hvl[pm] : 0;
+                    let tr = 1.0, h1 = getHVL(s.n, pm);
                     if (h1 > 0) tr *= Math.pow(0.5, x / h1);
                     for (let k = 1; k < lays.length; k++) {
-                        let l = lays[k], h = (s.n.hvl && s.n.hvl[l.m]) ? s.n.hvl[l.m] : 0;
+                        let l = lays[k], h = getHVL(s.n, l.m);
                         if (h > 0) tr *= Math.pow(0.5, l.t / h);
                     }
                     if (inType === 'act') {
@@ -211,21 +227,15 @@ function calculate() {
             const req = t / s;
             if (req >= 1) showResult("0 mm", "None");
             else {
-                let h = (n.hvl && n.hvl[mat]) ? n.hvl[mat] : (mat === 'Lead' ? n.hvl['Lead'] : 0);
+                let h = getHVL(n, mat);
+                const revHvlLabel = getHVLSourceLabel();
                 if (h > 0) {
                     const thk = h * (Math.log(req) / Math.log(0.5));
                     entry.resultVal = thk.toFixed(2); entry.resultUnit = "mm";
                     showResult(`${thk.toFixed(2)} mm`, mat);
                     addToLog(entry);
 
-                    // Spec Report + HVL 출처/검증근거
-                    const revRef = {
-                        'Lead': 'QSA MAN-027 T7 (broad-beam)', 'Steel': 'QSA MAN-027 T7', 'Concrete': 'QSA MAN-027 T7',
-                        'Tungsten': 'QSA MAN-027 T7', 'DU': 'QSA MAN-027 T7', 'LeadGlass': 'Representative (ρ≈3.3, Pb30%)',
-                        'Water': 'NIST XCOM μ/ρ×ρ', 'Polyethylene': 'NIST XCOM μ/ρ×ρ, ρ=0.94',
-                        'Paraffin': 'NIST XCOM μ/ρ×ρ, ρ=0.93', 'Aluminum': 'NIST XCOM μ/ρ×ρ, ρ=2.699'
-                    };
-                    document.getElementById('specReportBox').innerHTML = `<div class="spec-report"><div class="spec-row"><span class="spec-key">${n.id}:</span> <span class="spec-val">Γ=${n.gamma} mSv·m²/h·Ci</span></div><div class="spec-row"><span class="spec-key">${mat} HVL:</span> <span class="spec-val">${h}mm</span></div></div><div style="margin-top:8px; padding:6px 8px; border-top:1px dashed var(--hobis-border);"><div style="font-size:0.7rem; font-weight:bold; color:#5f7481; margin-bottom:3px;">HVL REFERENCE</div><div class="spec-row" style="font-size:0.65rem;"><span class="spec-key" style="color:#5f7481;">${mat}</span> <span class="spec-val" style="color:#5f7481;">${revRef[mat] || 'N/A'}</span></div><div style="font-size:0.6rem; color:#4a5a64; margin-top:4px;">NIST narrow-beam vs QSA broad-beam: 10~20% 차이는 빌드업 팩터로 설명됨</div></div>`;
+                    document.getElementById('specReportBox').innerHTML = `<div class="spec-report"><div class="spec-row"><span class="spec-key">${n.id}:</span> <span class="spec-val">Γ=${n.gamma} mSv·m²/h·Ci</span></div><div class="spec-row"><span class="spec-key">${mat} HVL:</span> <span class="spec-val">${h}mm</span></div></div><div style="margin-top:8px; padding:6px 8px; border-top:1px dashed var(--hobis-border);"><div style="font-size:0.7rem; font-weight:bold; color:#5f7481; margin-bottom:3px;">HVL REFERENCE — <span style="color:var(--hobis-cyan);">${revHvlLabel}</span></div><div style="font-size:0.6rem; color:#4a5a64; margin-top:4px;">QSA: broad-beam(빌드업 포함, 보수적) | NIST: narrow-beam(이론값, HVL=ln2/(μ/ρ×ρ))</div></div>`;
 
                     const L = [], D = [];
                     const yAxisLabel = document.getElementById('targetType').value === 'dose'
