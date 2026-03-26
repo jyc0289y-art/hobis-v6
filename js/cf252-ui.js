@@ -719,18 +719,37 @@ function cf252ShowDoseResult(result, limit, pass) {
             const sel = document.getElementById('cf252Preset');
             const presetId = sel ? sel.value : '';
             const isConcreteHotcell = presetId.startsWith('hotcell_handling') || presetId.startsWith('stc100_x4_wall') || presetId.startsWith('uktib_x2_wall');
-            const isRTHotcell = presetId.startsWith('rt_hotcell');
+            const isRTHotcell = presetId.startsWith('rt_hotcell') || presetId.startsWith('rt_room_');
             if (!isConcreteHotcell && !isRTHotcell) return '';
-            const htmlFile = isConcreteHotcell ? 'cf252-hotcell-concrete-3d.html' : 'cf252-hotcell-3d.html';
-            const overlayFn = isConcreteHotcell ? 'cf252OpenConcrete3DOverlay' : 'cf252Open3DOverlay';
-            const title = isConcreteHotcell ? '3D CONCRETE HOT CELL' : '3D HOT CELL STRUCTURE';
-            return `<div class="cf252-3d-section" style="cursor:pointer;" onclick="${overlayFn}()">
+            if (isConcreteHotcell) {
+                return `<div class="cf252-3d-section" style="cursor:pointer;" onclick="cf252OpenConcrete3DOverlay()">
+                <div class="header" style="border:none; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;">
+                    <span>3D CONCRETE HOT CELL</span>
+                    <button class="btn-outline" onclick="event.stopPropagation(); cf252OpenConcrete3DOverlay()" style="font-size:0.7rem; padding:2px 8px;">&#x2922; EXPAND</button>
+                </div>
+                <div style="height:180px; background:#0d1117; border-radius:4px; border:1px solid var(--hobis-border); position:relative; overflow:hidden;">
+                    <iframe src="cf252-hotcell-concrete-3d.html" style="width:200%; height:200%; transform:scale(0.5); transform-origin:top left; border:none; pointer-events:none;" loading="lazy"></iframe>
+                    <div style="position:absolute;inset:0;background:linear-gradient(transparent 60%, rgba(13,17,23,0.7));pointer-events:none;"></div>
+                </div>
+                <div style="text-align:center; font-size:0.7rem; color:#5f7481; padding:4px;">클릭하여 인터랙티브 3D 뷰어 열기</div>
+            </div>`;
+            }
+            // RT 핫셀/RT룸 — 현재 프리셋의 차폐 재질을 URL params로 전달
+            const inp = cf252GetCurrentInputs();
+            const sh = inp.shielding || [];
+            const s1m = (sh[0] || {}).material || 'Water';
+            const s1t = (sh[0] || {}).thickness_cm || 30;
+            const s2m = (sh[1] || {}).material || 'Pb';
+            const s2t = (sh[1] || {}).thickness_cm || 5;
+            const matNames = { Water:'물', Paraffin:'파라핀', PE:'PE', Pb:'납', Concrete:'콘크리트', Al:'Al', Iron:'Fe' };
+            const thumbUrl = `cf252-hotcell-3d.html?s1m=${s1m}&s1t=${s1t}&s2m=${s2m}&s2t=${s2t}`;
+            return `<div class="cf252-3d-section" style="cursor:pointer;" onclick="cf252Open3DOverlay()">
             <div class="header" style="border:none; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;">
-                <span>${title}</span>
-                <button class="btn-outline" onclick="event.stopPropagation(); ${overlayFn}()" style="font-size:0.7rem; padding:2px 8px;">&#x2922; EXPAND</button>
+                <span>3D ${matNames[s1m]||s1m}+${matNames[s2m]||s2m} STRUCTURE</span>
+                <button class="btn-outline" onclick="event.stopPropagation(); cf252Open3DOverlay()" style="font-size:0.7rem; padding:2px 8px;">&#x2922; EXPAND</button>
             </div>
             <div style="height:180px; background:#0d1117; border-radius:4px; border:1px solid var(--hobis-border); position:relative; overflow:hidden;">
-                <iframe src="${htmlFile}" style="width:200%; height:200%; transform:scale(0.5); transform-origin:top left; border:none; pointer-events:none;" loading="lazy"></iframe>
+                <iframe src="${thumbUrl}" style="width:200%; height:200%; transform:scale(0.5); transform-origin:top left; border:none; pointer-events:none;" loading="lazy"></iframe>
                 <div style="position:absolute;inset:0;background:linear-gradient(transparent 60%, rgba(13,17,23,0.7));pointer-events:none;"></div>
             </div>
             <div style="text-align:center; font-size:0.7rem; color:#5f7481; padding:4px;">클릭하여 인터랙티브 3D 뷰어 열기</div>
@@ -1698,6 +1717,24 @@ function cf252Open3DOverlay() {
     let ov = document.getElementById('cf252-3d-overlay');
     if (ov) ov.remove();
 
+    // 현재 프리셋의 차폐 재질 확인
+    const inp = cf252GetCurrentInputs();
+    const shields = inp.shielding || [];
+    const s1 = shields[0] || { material: 'Water', thickness_cm: 30 };
+    const s2 = shields[1] || { material: 'Pb', thickness_cm: 5 };
+    // 재질명 매핑 (cf252 프리셋의 material → 3D param)
+    const s1Mat = s1.material || 'Water';
+    const s1T = s1.thickness_cm || 30;
+    const s2Mat = s2.material || 'Pb';
+    const s2T = s2.thickness_cm || 5;
+
+    const matLabels = { Water:'물', Paraffin:'파라핀', PE:'PE', Pb:'납', Concrete:'콘크리트', Al:'알루미늄', Iron:'철', LeadGlass:'납유리' };
+    const s1Label = matLabels[s1Mat] || s1Mat;
+    const s2Label = matLabels[s2Mat] || s2Mat;
+
+    // 3D iframe URL params
+    const iframeUrl = `cf252-hotcell-3d.html?s1m=${s1Mat}&s1t=${s1T}&s2m=${s2Mat}&s2t=${s2T}&wm=LeadGlass&wt=5`;
+
     ov = document.createElement('div');
     ov.id = 'cf252-3d-overlay';
     ov.className = 'cf252-overlay';
@@ -1705,13 +1742,13 @@ function cf252Open3DOverlay() {
     const controlsHTML = `
         <div class="cf252-3d-controls">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                <span style="font-family:'Orbitron',sans-serif; color:var(--hobis-warn); font-size:0.85rem;">RT 수조 핫셀 설계</span>
+                <span style="font-family:'Orbitron',sans-serif; color:var(--hobis-warn); font-size:0.85rem;">${s1Label}+${s2Label} 핫셀 설계</span>
                 <button onclick="cf252Close3DOverlay()" style="background:none; color:var(--hobis-alert); border:1px solid var(--hobis-alert); padding:2px 8px; cursor:pointer; font-size:12px;">✕</button>
             </div>
 
             <h3 style="font-size:0.75rem; color:var(--hobis-cyan); margin:10px 0 6px; border-bottom:1px solid var(--hobis-border); padding-bottom:3px;">차폐 구조</h3>
-            ${_cf252SliderWithInput('cf252Ov3D_waterT', '수조 물 두께', 5, 60, 1, 30, 'cm')}
-            ${_cf252SliderWithInput('cf252Ov3D_leadT', '납판 두께', 0, 20, 0.5, 5, 'cm')}
+            ${_cf252SliderWithInput('cf252Ov3D_waterT', s1Label + ' 두께', 5, 60, 1, s1T, 'cm')}
+            ${_cf252SliderWithInput('cf252Ov3D_leadT', s2Label + ' 두께', 0, 20, 0.5, s2T, 'cm')}
             ${_cf252SliderWithInput('cf252Ov3D_leadGlassT', '납유리 두께 (창)', 0, 20, 0.5, 5, 'cm')}
 
             <h3 style="font-size:0.75rem; color:var(--hobis-cyan); margin:10px 0 6px; border-bottom:1px solid var(--hobis-border); padding-bottom:3px;">내부 치수</h3>
@@ -1739,7 +1776,7 @@ function cf252Open3DOverlay() {
     ov.innerHTML = `
         <div class="cf252-ov-content cf252-3d-enhanced">
             <div class="cf252-3d-viewer">
-                <iframe id="cf252-3d-iframe" src="cf252-hotcell-3d.html" style="width:100%; height:100%; border:none;"></iframe>
+                <iframe id="cf252-3d-iframe" src="${iframeUrl}" style="width:100%; height:100%; border:none;"></iframe>
             </div>
             ${controlsHTML}
         </div>`;

@@ -40,27 +40,21 @@ body { background:#0a0a0c; color:#c0d0d8; font-family:'Segoe UI',sans-serif; ove
 </head>
 <body>
 <div id="hud">
-    <h1>Cf-252 RT룸 수조 핫셀</h1>
-    <div class="sub">성능시험실(T) 내 아크릴+물+납 핫셀 구조 — 3D 시각화</div>
+    <h1>Cf-252 핫셀 3D</h1>
+    <div class="sub" id="hudSub">차폐 구조 — 3D 시각화</div>
 
     <h2>구조 범례</h2>
-    <div class="legend"><div class="swatch" style="background:rgba(0,150,255,0.4);"></div> 아크릴 수조 (물 충전)</div>
-    <div class="legend"><div class="swatch" style="background:rgba(100,100,110,0.8);"></div> 납판 (감마 차폐)</div>
-    <div class="legend"><div class="swatch" style="background:rgba(180,140,255,0.5);"></div> 납유리창 (시인성 확보)</div>
-    <div class="legend"><div class="swatch" style="background:rgba(0,247,255,0.3); border:1px solid rgba(0,247,255,0.8);"></div> 내부 작업공간</div>
-    <div class="legend"><div class="swatch" style="background:rgba(200,200,200,0.9);"></div> SUS304 프레임 (구조보강)</div>
-    <div class="legend"><div class="swatch" style="background:rgba(0,255,50,0.8);"></div> Cf-252 선원 위치</div>
-    <div class="legend"><div class="swatch" style="background:rgba(255,100,0,0.6);"></div> 선량 평가점</div>
+    <div id="hudLegend"></div>
 
     <h2>핫셀 치수</h2>
     <div class="spec"><span class="spec-k">내부 공간</span><span class="spec-v">100 × 80 × 100 cm</span></div>
-    <div class="spec"><span class="spec-k">벽/천장 수조</span><span class="spec-v">물 30cm + 납 5cm</span></div>
-    <div class="spec"><span class="spec-k">창 (전면)</span><span class="spec-v" id="windowSpec">물 30cm + 납유리 5cm</span></div>
-    <div class="spec"><span class="spec-k">바닥</span><span class="spec-v">SUS304 베이스 + 납판</span></div>
-    <div class="spec"><span class="spec-k">외부 치수</span><span class="spec-v" id="outerDim">170 × 150 × 170 cm</span></div>
-    <div class="spec"><span class="spec-k">SUS304 프레임</span><span class="spec-v">50×50×5mm 앵글, 8주, 용접조립</span></div>
-    <div class="spec"><span class="spec-k">수조 무게 (물)</span><span class="spec-v" id="waterWeight">≈ 1,440 kg</span></div>
-    <div class="spec"><span class="spec-k">납판 무게</span><span class="spec-v" id="leadWeight">≈ 2,720 kg</span></div>
+    <div class="spec"><span class="spec-k">벽/천장</span><span class="spec-v" id="wallSpec">-</span></div>
+    <div class="spec"><span class="spec-k">창 (전면)</span><span class="spec-v" id="windowSpec">-</span></div>
+    <div class="spec"><span class="spec-k">바닥</span><span class="spec-v">SUS304 베이스 + 2차 차폐</span></div>
+    <div class="spec"><span class="spec-k">외부 치수</span><span class="spec-v" id="outerDim">-</span></div>
+    <div class="spec"><span class="spec-k">SUS304 프레임</span><span class="spec-v">50×50×5mm 앵글</span></div>
+    <div class="spec"><span class="spec-k">1차 차폐 중량</span><span class="spec-v" id="waterWeight">-</span></div>
+    <div class="spec"><span class="spec-k">2차 차폐 중량</span><span class="spec-v" id="leadWeight">-</span></div>
 
     <h2>수용 용기</h2>
     <div class="spec"><span class="spec-k">STC-100</span><span class="spec-v">Ø606 × H874mm, 192kg</span></div>
@@ -113,10 +107,32 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
 // === CONSTANTS (from cf252.js) ===
-const HVL_G = { Pb:0.82, Water:10.0 };
-const HVL_N = { PE:1.85, Pb:3.45, Water:2.3 };
+const HVL_G = { Pb:0.82, Concrete:5.03, Water:10.0, Paraffin:11.0, PE:10.6, Al:4.2, Iron:1.5 };
+const HVL_N = { PE:1.85, Pb:3.45, Concrete:3.03, Water:2.16, Paraffin:1.9, Al:10.5, Iron:4.4 };
 const GAMMA_CONST = 23.1;
 const NEUTRON_CONST = 411.0;
+
+// URL params로 차폐 구성을 동적으로 받음
+// 예: ?shield1=Paraffin:8&shield2=Pb:5&window=LeadGlass:5
+const urlParams = new URLSearchParams(window.location.search);
+const paramShield1Mat = urlParams.get('s1m') || 'Water';
+const paramShield1T = parseFloat(urlParams.get('s1t')) || 30;
+const paramShield2Mat = urlParams.get('s2m') || 'Pb';
+const paramShield2T = parseFloat(urlParams.get('s2t')) || 5;
+const paramWindowMat = urlParams.get('wm') || 'LeadGlass';
+const paramWindowT = parseFloat(urlParams.get('wt')) || 5;
+
+// 재질별 3D 머티리얼 속성
+const MAT_3D_PROPS = {
+    'Water':     { color: 0x0096ff, opacity: 0.3, transmission: 0.6, label: '물', labelShort: 'H₂O' },
+    'Paraffin':  { color: 0xd4a850, opacity: 0.45, transmission: 0.3, label: '파라핀', labelShort: 'Wax' },
+    'PE':        { color: 0x80b060, opacity: 0.5, transmission: 0.2, label: '폴리에틸렌', labelShort: 'PE' },
+    'Pb':        { color: 0x64646e, opacity: 0.85, transmission: 0, label: '납', labelShort: 'Pb' },
+    'Concrete':  { color: 0x8a7e6e, opacity: 0.8, transmission: 0, label: '콘크리트', labelShort: 'Conc' },
+    'Al':        { color: 0xa0a0b0, opacity: 0.7, transmission: 0, label: '알루미늄', labelShort: 'Al' },
+    'Iron':      { color: 0x6a6a7a, opacity: 0.8, transmission: 0, label: '철', labelShort: 'Fe' },
+    'LeadGlass': { color: 0xb48cff, opacity: 0.4, transmission: 0.7, label: '납유리', labelShort: 'PbGl' },
+};
 
 function doseCalc(act, dist, shields) {
     let g = GAMMA_CONST * act / (dist*dist);
@@ -130,12 +146,15 @@ function doseCalc(act, dist, shields) {
     return { g: g*1000, n: n*1000, total: (g+n)*1000 }; // μSv/h
 }
 
-// === HOT CELL DIMENSIONS (cm) ===
+// === HOT CELL DIMENSIONS (cm) — 동적 차폐 구성 ===
 const HC = {
     innerW: 100, innerD: 80, innerH: 100,  // 내부 공간
-    waterT: 30,                              // 수조 물 두께
-    leadT: 5,                                // 납판 두께
-    leadGlassT: 5,                           // 납유리 (전면 창)
+    waterT: paramShield1T,                   // 1차 차폐층 두께 (neutron moderator)
+    leadT: paramShield2T,                    // 2차 차폐층 두께 (gamma shield)
+    leadGlassT: paramWindowT,                // 전면 창
+    shield1Mat: paramShield1Mat,             // 1차 차폐 재질
+    shield2Mat: paramShield2Mat,             // 2차 차폐 재질
+    windowMat: paramWindowMat,               // 창 재질
     frameSize: 5,                            // SUS304 프레임 앵글 크기
     baseH: 10,                               // 바닥 베이스 높이
 };
@@ -184,20 +203,25 @@ const pointLight = new THREE.PointLight(0x00ff33, 0.5, 300);
 pointLight.position.set(0, 50, 0);
 scene.add(pointLight);
 
-// === MATERIALS ===
-const matWater = new THREE.MeshPhysicalMaterial({
-    color: 0x0096ff, transparent: true, opacity: 0.3,
-    roughness: 0.1, metalness: 0, transmission: 0.6,
-    side: THREE.DoubleSide,
-});
-const matLead = new THREE.MeshStandardMaterial({
-    color: 0x64646e, roughness: 0.8, metalness: 0.5, transparent: true, opacity: 0.85,
-});
-const matLeadGlass = new THREE.MeshPhysicalMaterial({
-    color: 0xb48cff, transparent: true, opacity: 0.4,
-    roughness: 0.05, metalness: 0.1, transmission: 0.7,
-    side: THREE.DoubleSide,
-});
+// === MATERIALS (동적 생성) ===
+function makeMat3D(matName) {
+    const props = MAT_3D_PROPS[matName] || MAT_3D_PROPS['Water'];
+    if (props.transmission > 0) {
+        return new THREE.MeshPhysicalMaterial({
+            color: props.color, transparent: true, opacity: props.opacity,
+            roughness: 0.1, metalness: 0, transmission: props.transmission,
+            side: THREE.DoubleSide,
+        });
+    } else {
+        return new THREE.MeshStandardMaterial({
+            color: props.color, roughness: 0.8, metalness: 0.5,
+            transparent: true, opacity: props.opacity,
+        });
+    }
+}
+const matWater = makeMat3D(HC.shield1Mat);    // 1차 차폐층
+const matLead = makeMat3D(HC.shield2Mat);     // 2차 차폐층
+const matLeadGlass = makeMat3D(HC.windowMat); // 창
 const matFrame = new THREE.MeshStandardMaterial({
     color: 0xc8c8c8, roughness: 0.4, metalness: 0.8,
 });
@@ -724,24 +748,39 @@ function updateDose() {
         tbody.innerHTML += `<tr><td>${s.name}</td><td>${r.total.toFixed(2)} μSv/h</td><td class="${cls}">${icon} ${r.total <= 25 ? '≤25' : '>25'}</td></tr>`;
     });
 
-    // Update window spec
-    document.getElementById('windowSpec').textContent = `물 ${wT}cm + 납유리 ${lgT}cm`;
+    // 동적 HUD 업데이트
+    const s1p = MAT_3D_PROPS[HC.shield1Mat] || MAT_3D_PROPS['Water'];
+    const s2p = MAT_3D_PROPS[HC.shield2Mat] || MAT_3D_PROPS['Pb'];
+    const wp = MAT_3D_PROPS[HC.windowMat] || MAT_3D_PROPS['LeadGlass'];
 
-    // Update dimensions
+    document.getElementById('hudSub').textContent = `${s1p.label}+${s2p.label} 핫셀 구조 — 3D 시각화`;
+    document.getElementById('wallSpec').textContent = `${s1p.label} ${wT}cm + ${s2p.label} ${lT}cm`;
+    document.getElementById('windowSpec').textContent = `${s1p.label} ${wT}cm + ${wp.label} ${lgT}cm`;
+
     const oW = iW + (wT+lT)*2;
     const oD = iD + wT+lT + wT+lgT;
     const oH = iH + wT+lT + HC.baseH;
     document.getElementById('outerDim').textContent = `${oW} × ${oD} × ${oH} cm`;
 
-    // Water weight estimate: total water volume in liters ≈ kg
-    const wallVol = 2*(iW*iH*wT) + 2*(iD*iH*wT) + (iW*iD*wT); // walls + ceiling (approximate)
-    const waterKg = Math.round(wallVol / 1000);
-    document.getElementById('waterWeight').textContent = `≈ ${waterKg.toLocaleString()} kg`;
+    // 범례 동적 생성
+    const hexStr = (c) => '#' + c.toString(16).padStart(6,'0');
+    document.getElementById('hudLegend').innerHTML = `
+        <div class="legend"><div class="swatch" style="background:${hexStr(s1p.color)}; opacity:${s1p.opacity};"></div> ${s1p.label} (1차 차폐, n감속)</div>
+        <div class="legend"><div class="swatch" style="background:${hexStr(s2p.color)}; opacity:${s2p.opacity};"></div> ${s2p.label} (2차 차폐, γ차폐)</div>
+        <div class="legend"><div class="swatch" style="background:${hexStr(wp.color)}; opacity:${wp.opacity};"></div> ${wp.label} (전면 창)</div>
+        <div class="legend"><div class="swatch" style="background:rgba(0,247,255,0.3); border:1px solid rgba(0,247,255,0.8);"></div> 내부 작업공간</div>
+        <div class="legend"><div class="swatch" style="background:rgba(0,255,50,0.8);"></div> Cf-252 선원</div>
+        <div class="legend"><div class="swatch" style="background:rgba(255,100,0,0.6);"></div> 선량 평가점</div>`;
 
-    // Lead weight: density 11.34 g/cm³
-    const leadVol = 2*(oW*iH*lT) + 2*((iD+wT*2)*iH*lT) + (oW*oD*lT) + (iW*iD*lT); // walls+ceiling+bottom
-    const leadKg = Math.round(leadVol * 11.34 / 1000);
-    document.getElementById('leadWeight').textContent = `≈ ${leadKg.toLocaleString()} kg`;
+    // 1차 차폐층 중량 (밀도 기반)
+    const densities = { Water:1.0, Paraffin:0.93, PE:0.94, Concrete:2.3, Al:2.7, Iron:7.87, Pb:11.35, LeadGlass:3.3 };
+    const wallVol = 2*(iW*iH*wT) + 2*(iD*iH*wT) + (iW*iD*wT);
+    const s1Kg = Math.round(wallVol * (densities[HC.shield1Mat]||1.0) / 1000);
+    document.getElementById('waterWeight').textContent = `≈ ${s1Kg.toLocaleString()} kg (${s1p.label})`;
+
+    const leadVol = 2*(oW*iH*lT) + 2*((iD+wT*2)*iH*lT) + (oW*oD*lT) + (iW*iD*lT);
+    const s2Kg = Math.round(leadVol * (densities[HC.shield2Mat]||11.35) / 1000);
+    document.getElementById('leadWeight').textContent = `≈ ${s2Kg.toLocaleString()} kg (${s2p.label})`;
 }
 
 // === VIEW CONTROLS ===
