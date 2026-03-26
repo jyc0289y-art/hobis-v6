@@ -219,6 +219,15 @@
                 <div id="roToast" class="ro-toast hidden"></div>
             </div>
 
+            <!-- REFERENCE PANEL -->
+            <div id="referencePanel" class="panel hidden" style="flex-grow:1; overflow-y:auto; max-height:calc(100vh - 150px);">
+                <div class="header" style="color:var(--hobis-cyan); border-color:var(--hobis-cyan);">
+                    <span>PARAMETER VALIDATION REPORT</span>
+                    <button class="btn-outline" style="color:var(--hobis-cyan); border-color:var(--hobis-cyan);" onclick="refExportPDF()">PDF</button>
+                </div>
+                <div id="referenceContent"></div>
+            </div>
+
             <!-- LOG -->
             <div id="logPanel" class="panel">
                 <div class="header">
@@ -246,15 +255,6 @@
                 <div id="cf252ChartWrap" class="hidden" style="position:relative; height:250px; margin-top:10px;">
                     <canvas id="cf252Chart"></canvas>
                 </div>
-            </div>
-
-            <!-- REFERENCE PANEL (full-width) -->
-            <div id="referencePanel" class="panel hidden" style="flex-grow:1; overflow-y:auto; max-height:calc(100vh - 150px);">
-                <div class="header" style="color:var(--hobis-cyan); border-color:var(--hobis-cyan);">
-                    <span>PARAMETER VALIDATION REPORT</span>
-                    <button class="btn-outline" style="color:var(--hobis-cyan); border-color:var(--hobis-cyan);" onclick="refExportPDF()">PDF</button>
-                </div>
-                <div id="referenceContent"></div>
             </div>
 
             <!-- FLOW CAL DETAIL (RIGHT) -->
