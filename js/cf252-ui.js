@@ -1388,8 +1388,12 @@ function cf252GenerateSchematicSVG(sources, shielding, options = {}) {
         shieldX += layerW;
     });
 
-    // --- 평가점 ---
-    const evalX = srcX + totalDist * scale;
+    // --- 평가점 (차폐체 오른쪽 바깥에 배치) ---
+    // shieldX는 마지막 차폐층 끝 위치 (forEach 후)
+    // 스케일 기반 위치와 차폐체 끝 위치 중 더 오른쪽에 배치
+    const evalXByScale = srcX + totalDist * scale;
+    const evalXByShield = shieldX + 20; // 차폐체 끝 + 20px 여백
+    const evalX = Math.max(evalXByScale, evalXByShield);
     svg += `<g transform="translate(${evalX},${centerY})">`;
     svg += `<circle r="5" fill="none" stroke="#00ff33" stroke-width="2"/>`;
     svg += `<line x1="-4" y1="0" x2="4" y2="0" stroke="#00ff33" stroke-width="1.5"/>`;
