@@ -34,7 +34,7 @@ const GLOBAL_DB = {
                 "Water": 48.0,    // NIST XCOM @370keV avg, ρ=1.0
                 "Polyethylene": 51.0, // NIST XCOM @370keV, ρ=0.94
                 "Paraffin": 52.0, // NIST XCOM @370keV, ρ=0.93
-                "Aluminum": 22.0  // NIST XCOM @370keV, ρ=2.7
+                "Aluminum": 27.0  // NIST XCOM μ/ρ=0.096@370keV, ρ=2.7 → HVL=2.68cm
             }
         },
         {
@@ -51,7 +51,7 @@ const GLOBAL_DB = {
                 "Water": 38.0,    // NIST XCOM @215keV avg, ρ=1.0
                 "Polyethylene": 40.0, // NIST XCOM @215keV, ρ=0.94
                 "Paraffin": 41.0, // NIST XCOM @215keV, ρ=0.93
-                "Aluminum": 15.0  // NIST XCOM @215keV, ρ=2.7
+                "Aluminum": 21.0  // NIST XCOM μ/ρ=0.120@215keV, ρ=2.7 → HVL=2.14cm
             }
         },
         {
@@ -68,7 +68,7 @@ const GLOBAL_DB = {
                 "Water": 35.0,    // NIST XCOM @93keV avg, ρ=1.0
                 "Polyethylene": 37.0, // NIST XCOM @93keV, ρ=0.94
                 "Paraffin": 38.0, // NIST XCOM @93keV, ρ=0.93
-                "Aluminum": 8.0   // NIST XCOM @93keV, ρ=2.7
+                "Aluminum": 15.0  // NIST XCOM μ/ρ=0.170@93keV, ρ=2.7 → HVL=1.51cm
             }
         },
         {
@@ -85,7 +85,7 @@ const GLOBAL_DB = {
                 "Water": 111.0,   // NIST XCOM @1.25MeV, ρ=1.0
                 "Polyethylene": 118.0, // NIST XCOM @1.25MeV, ρ=0.94
                 "Paraffin": 119.0,// NIST XCOM @1.25MeV, ρ=0.93
-                "Aluminum": 44.0  // NIST XCOM @1.25MeV, ρ=2.7
+                "Aluminum": 47.0  // NIST XCOM μ/ρ=0.055@1.25MeV, ρ=2.7 → HVL=4.67cm
             }
         },
         {
@@ -102,7 +102,7 @@ const GLOBAL_DB = {
                 "Water": 87.0,    // NIST XCOM @662keV, ρ=1.0
                 "Polyethylene": 93.0, // NIST XCOM @662keV, ρ=0.94
                 "Paraffin": 94.0, // NIST XCOM @662keV, ρ=0.93
-                "Aluminum": 33.0  // NIST XCOM @662keV, ρ=2.7
+                "Aluminum": 34.0  // NIST XCOM μ/ρ=0.0775@662keV, ρ=2.7 → HVL=3.31cm
             }
         }
     ],

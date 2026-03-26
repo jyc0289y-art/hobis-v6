@@ -42,25 +42,27 @@ const CF252 = {
         return pSv_per_s * 3600 * 1e-9; // mSv·cm²/(mCi·h)
     },
 
-    // === HVL 값 (cm) — Alizadeh Rahvar et al., IJRR 18(2):381-387, 2020 (MCNPX) ===
-    // + 보고서 REV13 채택값 + RT룸 재료 확장
+    // === HVL 값 (cm) ===
+    // [감마] Alizadeh Rahvar et al., IJRR 18(2):381-387, 2020 (MCNPX) + NIST XCOM
+    // [중성자] Alizadeh Rahvar 2020 Table 2 + El-Khayatt & Abdo, Ann.Nucl.Energy 37(2):218, 2009
+    //          교차검증: Chapman & Storrs 1955(ORNL), Shultis & Faw 2000, Hila et al. 2023(MC)
     HVL_GAMMA: {
-        'Pb': 0.82,          // Table 2: simul. n+γ, photon scored = 0.82cm
-        'Concrete': 5.03,    // Table 2: simul. n+γ, photon scored = 5.03cm
-        'Water': 10.0,       // μ/ρ≈0.0707 cm²/g @1MeV, ρ=1.0 → HVL≈9.8cm (보수적 10cm)
-        'Paraffin': 11.0,    // μ/ρ≈0.065 cm²/g @1MeV, ρ=0.9 → HVL≈11cm
-        'PE': 10.6,          // μ/ρ≈0.0707 cm²/g @1MeV, ρ=0.94 → HVL≈10.6cm
-        'Al': 4.2,           // μ/ρ≈0.0614 cm²/g @1MeV, ρ=2.7 → HVL≈4.2cm (NIST XCOM)
-        'Iron': 1.7,         // μ/ρ≈0.0599 cm²/g @1MeV, ρ=7.87 → HVL≈1.5cm (NIST XCOM, 보수적 1.7cm)
+        'Pb': 0.82,          // Alizadeh Rahvar T2: simul. n+γ, photon scored = 0.82cm
+        'Concrete': 5.03,    // Alizadeh Rahvar T2: simul. n+γ, photon scored = 5.03cm
+        'Water': 10.0,       // NIST XCOM μ/ρ=0.0707@1MeV, ρ=1.0 → HVL≈9.8cm (보수적 10cm)
+        'Paraffin': 11.0,    // NIST XCOM μ/ρ≈0.065@1MeV, ρ=0.93 → HVL≈11cm
+        'PE': 10.6,          // NIST XCOM μ/ρ=0.0707@1MeV, ρ=0.94 → HVL≈10.6cm
+        'Al': 4.2,           // NIST XCOM μ/ρ=0.0614@1MeV, ρ=2.699 → HVL=4.18cm
+        'Iron': 1.5,         // NIST XCOM μ/ρ=0.0599@1MeV, ρ=7.874 → HVL=1.47cm
     },
     HVL_NEUTRON: {
-        'PE': 1.85,          // Table 2: separate neutron = 1.85cm
-        'Pb': 3.45,          // Table 2: simul. n+γ, neutron scored = 3.45cm
-        'Concrete': 3.03,    // Table 2: separate neutron = 3.03cm
-        'Water': 2.16,       // Table 2: separate neutron = 2.16cm
-        'Paraffin': 1.9,     // H밀도 8.0e22/cm³ (PE와 유사) → HVL≈1.9cm
-        'Al': 5.5,           // 알루미늄 중성자 HVL ≈5.5cm (대표값, 감속효과 낮음)
-        'Iron': 4.5,         // 철 중성자 HVL ≈4.5cm (비탄성산란 기반, 대표값)
+        'PE': 1.85,          // Alizadeh Rahvar T2: separate neutron = 1.85cm
+        'Pb': 3.45,          // Alizadeh Rahvar T2: simul. n+γ, neutron scored = 3.45cm
+        'Concrete': 3.03,    // Alizadeh Rahvar T2: separate neutron = 3.03cm
+        'Water': 2.16,       // Alizadeh Rahvar T2: separate neutron = 2.16cm
+        'Paraffin': 1.9,     // H밀도 PE 유사, PE HVL 1.85cm 기반 추정
+        'Al': 10.5,          // El-Khayatt 2009: ΣR/ρ=0.0245 → ΣR=0.066 → HVL=10.5cm
+        'Iron': 4.4,         // El-Khayatt 2009: ΣR/ρ=0.0198 → ΣR=0.156 → HVL=4.4cm
     },
     HVL_REF: 'Alizadeh Rahvar et al., IJRR 18(2):381-387, 2020',
 
