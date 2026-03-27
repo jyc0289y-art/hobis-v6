@@ -50,7 +50,7 @@ const CF252 = {
         'Pb': 0.82,          // Alizadeh Rahvar T2: simul. n+γ, photon scored = 0.82cm
         'Concrete': 5.03,    // Alizadeh Rahvar T2: simul. n+γ, photon scored = 5.03cm
         'Water': 10.0,       // NIST XCOM μ/ρ=0.0707@1MeV, ρ=1.0 → HVL≈9.8cm (보수적 10cm)
-        'PE': 10.6,          // NIST XCOM μ/ρ=0.0707@1MeV, ρ=0.94 → HVL≈10.6cm
+        'PE': 10.2,          // NIST XCOM compound(μ/ρ=0.07262@1MeV)→10.15cm + Eid et al. Sci.Rep.2019 실측→~10.2cm 교차검증
         'Al': 4.2,           // NIST XCOM μ/ρ=0.0614@1MeV, ρ=2.699 → HVL=4.18cm
                              // 검증: Nuclear-Power.com Al 500keV HVL=3.05cm 일치
         'Iron': 1.5,         // NIST XCOM μ/ρ=0.0599@1MeV, ρ=7.874 → HVL=1.47cm

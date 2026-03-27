@@ -772,7 +772,7 @@ function cf252ShowDoseResult(result, limit, pass) {
                 <div class="spec-row"><span class="spec-key">HVL n Paraffin</span><span class="spec-val">${CF252.HVL_NEUTRON.Paraffin} cm</span></div>
                 <div class="spec-row"><span class="spec-key">HVL n Al</span><span class="spec-val">${CF252.HVL_NEUTRON.Al} cm</span></div>
                 <div class="spec-row"><span class="spec-key">HVL n Fe</span><span class="spec-val">${CF252.HVL_NEUTRON.Iron} cm</span></div>
-                ${CF252.HVL_GAMMA.PE ? `<div class="spec-row"><span class="spec-key">HVL γ PE</span><span class="spec-val">${CF252.HVL_GAMMA.PE} cm <span style="color:#8fa3b0; font-size:0.6rem;">⚠ 감마 크레딧 미적용 — 보수적 평가</span></span></div>` : ''}
+                ${CF252.HVL_GAMMA.PE ? `<div class="spec-row"><span class="spec-key">HVL γ PE</span><span class="spec-val">${CF252.HVL_GAMMA.PE} cm <span style="color:#8fa3b0; font-size:0.6rem;">NIST XCOM + Eid 2019 실측 교차검증</span></span></div>` : ''}
                 ${CF252.HVL_GAMMA.Al ? `<div class="spec-row"><span class="spec-key">HVL γ Al</span><span class="spec-val">${CF252.HVL_GAMMA.Al} cm</span></div>` : ''}
                 ${CF252.HVL_GAMMA.Iron ? `<div class="spec-row"><span class="spec-key">HVL γ Fe</span><span class="spec-val">${CF252.HVL_GAMMA.Iron} cm</span></div>` : ''}
             </div>
