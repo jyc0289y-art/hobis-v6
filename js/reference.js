@@ -175,6 +175,38 @@ function refRender() {
     html += `<div ${S.note}><b>합의값:</b> ΣR/ρ = 0.0198 ± 0.001 → ΣR = 0.156 cm⁻¹ → <b>HVL = 4.4 ± 0.2 cm</b><br>
     <b>Cf-252 특화 연구:</b> Guembou Shouop et al., AIP Advances 10:075203, 2020 (<a ${S.link} href="https://doi.org/10.1063/1.5144923">DOI</a>) — Cf-252 차폐에서 Fe를 <b>1차 차폐층</b>으로 권장. 고속중성자 비탄성산란으로 에너지 감소 후, 후단 PE/붕소에서 열중성자 포획. 최적 순서: Fe → PE(또는 흑연) → 붕소/Cd → Pb</div>`;
 
+    // 3.5 PE 감마 HVL
+    html += `<div ${S.h3}>3.5 Polyethylene(PE) 감마 HVL — NIST + 실험 교차검증</div>`;
+    html += `<div ${S.note}><b>배경:</b> Alizadeh Rahvar(2020) 논문은 PE의 <b>중성자</b> HVL만 평가(1.85cm). PE의 <b>감마</b> HVL은 MCNPX 시뮬레이션 대상이 아니었음.<br>
+    <b>방법:</b> (1) NIST XCOM 화합물 DB에서 PE의 μ/ρ 직접 조회, (2) Eid et al.(2019) 실험 측정값과 교차검증, (3) 논문의 Pb/Conc γ-HVL로 Cf-252 유효에너지 역산 후 적용</div>`;
+
+    html += `<div ${S.note} style="margin-top:8px;"><b>Step 1: Cf-252 감마 유효에너지 역산</b><br>
+    Pb HVL=0.77cm → μ/ρ=0.0793 → NIST 보간: <b>~906 keV</b><br>
+    Conc HVL=4.80cm → μ/ρ=0.0628 → NIST 보간: <b>~1055 keV</b><br>
+    PE는 저Z 물질(H,C) → Concrete와 유사한 <b>~1000-1050 keV</b> 적용이 합리적</div>`;
+
+    html += `<div ${S.note} style="margin-top:8px;"><b>Step 2: NIST XCOM vs Eid et al.(2019) 실측 비교</b></div>`;
+    html += `<table ${S.tbl}>
+        <tr><td ${S.th}>에너지 (keV)</td><td ${S.th}>NIST μ/ρ (cm²/g)</td><td ${S.th}>NIST HVL (cm)</td><td ${S.th}>Eid 2019 실측 HVL (cm)</td><td ${S.th}>일치도</td></tr>
+        <tr><td ${S.td}>661.66 (Cs-137)</td><td ${S.td}>0.0920 (보간)</td><td ${S.td}>8.00</td><td ${S.td}><b>8.35</b></td><td ${S.tdn}>4%</td></tr>
+        <tr><td ${S.td}>964.13</td><td ${S.td}>0.0740 (보간)</td><td ${S.td}>9.50</td><td ${S.td}><b>9.94</b></td><td ${S.tdn}>5%</td></tr>
+        <tr><td ${S.td} style="background:#1a3a1a;"><b>1000 (Cf-252 유효)</b></td><td ${S.td} style="background:#1a3a1a;"><b>0.07262</b></td><td ${S.td} style="background:#1a3a1a;"><b>10.15</b></td><td ${S.td} style="background:#1a3a1a;"><b>~10.2 (보간)</b></td><td ${S.tdn} style="background:#1a3a1a;"><b>1%</b></td></tr>
+        <tr><td ${S.td}>1173.23 (Co-60)</td><td ${S.td}>0.06495</td><td ${S.td}>11.35</td><td ${S.td}><b>10.89</b></td><td ${S.tdn}>4%</td></tr>
+        <tr><td ${S.td}>1332.50 (Co-60)</td><td ${S.td}>0.0630 (보간)</td><td ${S.td}>11.60</td><td ${S.td}><b>11.64</b></td><td ${S.tdn}>1%</td></tr>
+    </table>`;
+    html += `<div ${S.note}><b>NIST 데이터 출처:</b> <a ${S.link} href="https://physics.nist.gov/PhysRefData/XrayMassCoef/ComTab/polyethylene.html">NIST XCOM — Polyethylene (C₂H₄) 화합물 직접 항목</a> (원소별 혼합법칙 계산이 아닌 공식 화합물 데이터)<br>
+    <b>실험 출처:</b> <a ${S.link} href="https://doi.org/10.1038/s41598-019-52220-7">Eid et al., Scientific Reports 9:16012, 2019</a> — 순수 HDPE(ρ=0.944) 감마 감쇄계수를 Am-241~Co-60(59~1408 keV) 12개 에너지에서 실측</div>`;
+
+    html += `<div ${S.note} style="margin-top:8px; border-left:3px solid var(--hobis-warn); padding-left:8px;">
+    <b>⚠ HOBIS 적용 방침:</b><br>
+    PE γ-HVL ≈ 10.2cm @1MeV는 NIST 이론 + 실험 측정 양쪽에서 검증되었으나,<br>
+    <b>Cf-252 선량평가에서 PE의 감마 크레딧은 기본적으로 미적용 (보수적 평가)</b><br>
+    이유: (1) PE는 중성자 차폐 목적으로 설치 — 감마 차폐 목적이 아님<br>
+    (2) Alizadeh Rahvar(2020) 논문에서 PE의 감마 HVL을 시뮬레이션하지 않음<br>
+    (3) narrow-beam HVL이므로 실제 광속(broad-beam) 환경에서는 빌드업 팩터로 인해 차폐 효과 감소<br>
+    (4) 규제 보고서에서 보수적 접근 요구<br><br>
+    <b>물리적 실효과:</b> PE 25cm → 감마 투과율 ≈ 18.3% (약 82% 감쇄). 무시할 수 없는 수준이나 안전측 평가를 위해 미반영.</div>`;
+
     // ===== 4. 단위 환산 =====
     html += `<div ${S.h2}>4. 단위 환산 계수</div>`;
     html += `<table ${S.tbl}>
@@ -203,6 +235,7 @@ function refRender() {
         ['Guembou Shouop et al., AIP Advances 10:075203, 2020', 'Cf-252 최적 차폐 설계 (Fe+PE+B+Pb)', 'https://doi.org/10.1063/1.5144923'],
         ['Kang et al., J Korean Phys Soc 52:1744-1747, 2008', 'Cf-252 차폐 실험, paraffin collimator', 'https://doi.org/10.3938/jkps.52.1744'],
         ['McAlister, Eichrom Technologies', '중성자 차폐 백서 — 감마/중성자 감쇄 특성', 'https://www.eichrom.com/wp-content/uploads/2018/02/neutron-attenuation-white-paper-by-d-m-rev-2-1.pdf'],
+        ['Eid et al., Scientific Reports 9:16012, 2019', 'HDPE 감마 감쇄계수 실측 — PE γ-HVL 실험 검증', 'https://doi.org/10.1038/s41598-019-52220-7'],
         ['Nuclear-Power.com', 'HVL 참조 테이블 (Al, Fe 교차검증)', 'https://www.nuclear-power.com/nuclear-power/reactor-physics/interaction-radiation-matter/interaction-gamma-radiation-matter/gamma-ray-attenuation/half-value-layer/'],
         ['Shultis & Faw, "Radiation Shielding" (ANS, 2000)', '차폐 설계 교과서 — 제거단면적, HVL 참조', ''],
     ];

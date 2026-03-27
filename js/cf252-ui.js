@@ -772,6 +772,9 @@ function cf252ShowDoseResult(result, limit, pass) {
                 <div class="spec-row"><span class="spec-key">HVL n Paraffin</span><span class="spec-val">${CF252.HVL_NEUTRON.Paraffin} cm</span></div>
                 <div class="spec-row"><span class="spec-key">HVL n Al</span><span class="spec-val">${CF252.HVL_NEUTRON.Al} cm</span></div>
                 <div class="spec-row"><span class="spec-key">HVL n Fe</span><span class="spec-val">${CF252.HVL_NEUTRON.Iron} cm</span></div>
+                ${CF252.HVL_GAMMA.PE ? `<div class="spec-row"><span class="spec-key">HVL γ PE</span><span class="spec-val">${CF252.HVL_GAMMA.PE} cm <span style="color:#8fa3b0; font-size:0.6rem;">⚠ 감마 크레딧 미적용 — 보수적 평가</span></span></div>` : ''}
+                ${CF252.HVL_GAMMA.Al ? `<div class="spec-row"><span class="spec-key">HVL γ Al</span><span class="spec-val">${CF252.HVL_GAMMA.Al} cm</span></div>` : ''}
+                ${CF252.HVL_GAMMA.Iron ? `<div class="spec-row"><span class="spec-key">HVL γ Fe</span><span class="spec-val">${CF252.HVL_GAMMA.Iron} cm</span></div>` : ''}
             </div>
         </div>
 
@@ -788,7 +791,8 @@ function cf252ShowDoseResult(result, limit, pass) {
             <div style="font-size:0.75rem; font-weight:bold; color:var(--hobis-cyan); margin:8px 0 4px;">2. HVL 출처</div>
             <div class="spec-report">
                 <div class="spec-row"><span class="spec-key">γ Pb/Concrete</span><span class="spec-val">Alizadeh Rahvar et al., IJRR 18(2):381-387, 2020 (MCNPX, Table 2)</span></div>
-                <div class="spec-row"><span class="spec-key">γ Water/PE/Paraffin/Al/Fe</span><span class="spec-val">NIST XCOM — HVL=ln2/(μ/ρ×ρ) @1MeV</span></div>
+                <div class="spec-row"><span class="spec-key">γ Water/Paraffin/Al/Fe</span><span class="spec-val">NIST XCOM — HVL=ln2/(μ/ρ×ρ) @1MeV</span></div>
+                <div class="spec-row"><span class="spec-key">γ PE</span><span class="spec-val">NIST XCOM(μ/ρ=0.0726@1MeV→10.2cm) + Eid et al. 2019 실측(9.94cm@964keV, 10.89cm@1173keV) 교차검증 — ⚠ 보수적 평가시 감마 크레딧 미적용</span></div>
                 <div class="spec-row"><span class="spec-key">n PE/Pb/Conc/Water</span><span class="spec-val">Alizadeh Rahvar 2020, Table 2 (MCNPX separate neutron)</span></div>
                 <div class="spec-row"><span class="spec-key">n Al</span><span class="spec-val">El-Khayatt & Abdo 2009: ΣR/ρ=0.0245 → 10.5cm (7문헌 교차검증)</span></div>
                 <div class="spec-row"><span class="spec-key">n Fe</span><span class="spec-val">El-Khayatt & Abdo 2009: ΣR/ρ=0.0198 → 4.4cm (Guembou Shouop 2020: Cf-252 1차 차폐 권장)</span></div>
@@ -796,6 +800,7 @@ function cf252ShowDoseResult(result, limit, pass) {
 
             <div style="font-size:0.75rem; font-weight:bold; color:var(--hobis-cyan); margin:8px 0 4px;">3. 타당성 검증</div>
             <div class="spec-report" style="font-size:0.65rem;">
+                <div class="spec-row"><span class="spec-key">PE γ-HVL</span><span class="spec-val">NIST XCOM 10.15cm + Eid 2019(Sci.Rep.) 실측 ~10.2cm@1MeV — 1-5%이내 일치. 단, Cf-252 스펙트럼 가중 미반영(narrow-beam). 보수적 평가 시 감마 크레딧 미적용 권장</span></div>
                 <div class="spec-row"><span class="spec-key">Paraffin n-HVL</span><span class="spec-val">PE 대비 H원자밀도: PE nH=8.13×10²²/cm³, Paraffin nH=8.32×10²²/cm³ → 비율 0.977 → 1.9cm | Kang 2008 (J Korean Phys Soc): paraffin collimator 사용 | McAlister (Eichrom): PE급 차폐재 분류</span></div>
                 <div class="spec-row"><span class="spec-key">Al n-HVL</span><span class="spec-val">ΣR/ρ=0.0245±0.001 — Chapman 1955(ORNL), Chilton 1984, Kaplan 1989, Shultis 2000, Hila 2023(MC) 합의</span></div>
                 <div class="spec-row"><span class="spec-key">Fe n-HVL</span><span class="spec-val">ΣR/ρ=0.0198±0.001 — Chapman 1955, Shultis 2000, Hila 2023 합의 + Guembou Shouop 2020 Cf-252 최적설계</span></div>
@@ -813,7 +818,8 @@ function cf252ShowDoseResult(result, limit, pass) {
                 [7] Hila et al., Rad.Phys.Chem. 2023 — ENDF/B-VIII.0 MC 교차검증<br>
                 [8] Guembou Shouop et al., AIP Advances 10:075203, 2020 — Cf-252 최적 차폐 설계<br>
                 [9] Kang et al., J Korean Phys Soc 52:1744-1747, 2008 — Cf-252 차폐 실험<br>
-                [10] McAlister, Eichrom Technologies — 중성자 차폐 백서
+                [10] McAlister, Eichrom Technologies — 중성자 차폐 백서<br>
+                [11] Eid et al., Scientific Reports 9:16012, 2019 — HDPE 감마 감쇄계수 실측 (DOI:10.1038/s41598-019-52220-7)
             </div>
         </div>`;
 }
